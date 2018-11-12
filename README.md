@@ -8,11 +8,13 @@
 
 ### 使用约定 ###
 
-* Super:
+* Super
+
+    用 Lua 去子类化 Widget 或者 Actor 时候，会传入一个临时父类对象 Super，需要自己去声明一个本地变量来引用
 
 ## Samples ##
 
-* BlueluaDemo: 性能对比测试和简单用法
+* [BlueluaDemo](https://github.com/jashking/BlueluaDemo): 性能对比测试和简单用法
 
 ## TODO ##
 
