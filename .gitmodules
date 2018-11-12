@@ -1,0 +1,3 @@
+[submodule "Source/Liblua"]
+	path = Source/Liblua
+	url = https://github.com/jashking/Liblua.git
