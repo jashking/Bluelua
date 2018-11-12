@@ -6,6 +6,10 @@
 
 复制到项目 *Plugins* 目录下即可
 
+### 使用约定 ###
+
+* Super:
+
 ## Samples ##
 
 * BlueluaDemo: 性能对比测试和简单用法
