@@ -23,3 +23,4 @@
 * statistics
 * call BlueprintNativeEvent default implemention
 * WorldContextObject
+* call lua function in blueprint
