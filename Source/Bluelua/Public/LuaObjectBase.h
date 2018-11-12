@@ -50,6 +50,8 @@ public:
 	static bool FetchArrayProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
 	static bool FetchSetProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
 	static bool FetchMapProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
+	static bool FetchMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
+	static bool FetchDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
 
 	inline static bool Fetch(lua_State* L, int32 Index, int8& Value);
 	inline static bool Fetch(lua_State* L, int32 Index, uint8& Value);

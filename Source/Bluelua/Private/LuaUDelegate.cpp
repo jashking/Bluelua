@@ -6,6 +6,7 @@
 #include "lua.hpp"
 #include "LuaDelegateCaller.h"
 #include "LuaState.h"
+#include "LuaUObject.h"
 
 const char* FLuaUDelegate::UDELEGATE_METATABLE = "UDelegate_Metatable";
 
@@ -59,6 +60,60 @@ int FLuaUDelegate::Push(lua_State* L, UObject* Owner, void* InSource, UFunction*
 	{
 		LuaStateWrapper->AddToCache(InSource);
 	}
+
+	return 1;
+}
+
+bool FLuaUDelegate::Fetch(lua_State* L, int32 Index, UFunction* InFunction, FScriptDelegate* InScriptDelegate)
+{
+	if (!InScriptDelegate || !InFunction)
+	{
+		return false;
+	}
+
+	UObject* UserData = (UObject*)lua_touserdata(L, Index);
+	ULuaDelegateCaller* LuaDelegateCaller = Cast<ULuaDelegateCaller>(UserData);
+	if (!LuaDelegateCaller)
+	{
+		luaL_error(L, "Param %d is not a ULuaDelegateCaller", Index);
+	}
+
+	LuaDelegateCaller->BindSignatureFunction(InFunction);
+	InScriptDelegate->BindUFunction(LuaDelegateCaller, TEXT("NeverUsed"));
+
+	return true;
+}
+
+int FLuaUDelegate::CreateDelegate(lua_State* L)
+{
+	UObject* DelegateOwner = FLuaUObject::Fetch(L, 1);
+	if (!DelegateOwner)
+	{
+		return 0;
+	}
+
+	const int Param2Type = lua_type(L, 2);
+	if (Param2Type != LUA_TFUNCTION && lua_type(L, 3) != LUA_TFUNCTION)
+	{
+		luaL_error(L, "Create delegate failed! Param 2 or Param 3 must be a function!");
+	}
+
+	const int FunctionIndex = (Param2Type == LUA_TFUNCTION) ? 2 : 3;
+
+	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
+	if (!LuaStateWrapper)
+	{
+		return 0;
+	}
+
+	ULuaDelegateCaller* LuaDelegateCaller = ULuaDelegateCaller::CreateDelegate(DelegateOwner, LuaStateWrapper->AsShared(), nullptr, FunctionIndex);
+	if (!LuaDelegateCaller)
+	{
+		return 0;
+	}
+
+	lua_pushlightuserdata(L, LuaDelegateCaller);
+	LuaStateWrapper->AddDelegateReference(LuaDelegateCaller);
 
 	return 1;
 }

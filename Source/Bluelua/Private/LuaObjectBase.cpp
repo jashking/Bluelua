@@ -108,6 +108,8 @@ void FLuaObjectBase::Init()
 	RegisterFetcher<UArrayProperty>(FetchArrayProperty);
 	RegisterFetcher<USetProperty>(FetchSetProperty);
 	RegisterFetcher<UMapProperty>(FetchMapProperty);
+	RegisterFetcher<UMulticastDelegateProperty>(FetchMulticastDelegateProperty);
+	RegisterFetcher<UDelegateProperty>(FetchDelegateProperty);
 }
 
 FLuaObjectBase::PushPropertyFunction FLuaObjectBase::GetPusher(UClass* Class)
@@ -481,6 +483,42 @@ bool FLuaObjectBase::FetchMapProperty(lua_State* L, UProperty* Property, void* P
 	}
 
 	return false;
+}
+
+bool FLuaObjectBase::FetchMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index)
+{
+	auto DelegateProperty = Cast<UMulticastDelegateProperty>(Property);
+	if (!DelegateProperty)
+	{
+		return false;
+	}
+
+	FScriptDelegate ScriptDelegate;
+	if (!FLuaUDelegate::Fetch(L, Index, DelegateProperty->SignatureFunction, &ScriptDelegate))
+	{
+		return false;
+	}
+
+	FMulticastScriptDelegate* MulticastScriptDelegate = DelegateProperty->GetPropertyValuePtr_InContainer(Params);
+	if (MulticastScriptDelegate)
+	{
+		MulticastScriptDelegate->AddUnique(ScriptDelegate);
+	}
+
+	return true;
+}
+
+bool FLuaObjectBase::FetchDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index)
+{
+	auto DelegateProperty = Cast<UDelegateProperty>(Property);
+	if (!DelegateProperty)
+	{
+		return false;
+	}
+
+	FScriptDelegate* ScriptDelegate = DelegateProperty->GetPropertyValuePtr_InContainer(Params);
+
+	return FLuaUDelegate::Fetch(L, Index, DelegateProperty->SignatureFunction, ScriptDelegate);
 }
 
 bool FLuaObjectBase::Fetch(lua_State* L, int32 Index, int8& Value)

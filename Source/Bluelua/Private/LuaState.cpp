@@ -14,6 +14,7 @@
 #include "LuaObjectBase.h"
 #include "LuaStackGuard.h"
 #include "LuaUClass.h"
+#include "LuaUDelegate.h"
 #include "LuaUScriptStruct.h"
 
 DECLARE_DWORD_ACCUMULATOR_STAT(TEXT("LuaMemory"), STAT_LuaMemory, STATGROUP_Bluelua);
@@ -49,7 +50,8 @@ FLuaState::FLuaState()
 		lua_register(L, "print", LuaPrint);
 		lua_register(L, "loadClass", LuaLoadClass);
 		lua_register(L, "loadStruct", LuaLoadStruct);
-		lua_register(L, "enum", GetEnumValue);
+		lua_register(L, "getEnum", GetEnumValue);
+		lua_register(L, "createDelegate", &FLuaUDelegate::CreateDelegate);
 
 		// bind this to L
 		*((void**)lua_getextraspace(L)) = this;

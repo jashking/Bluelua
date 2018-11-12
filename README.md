@@ -18,9 +18,9 @@
 
 ## TODO ##
 
-* fetch UMulticastDelegateProperty/UDelegateProperty
 * require (search path)
 * statistics
 * call BlueprintNativeEvent default implemention
 * WorldContextObject
 * call lua function in blueprint
+* function to get child lua module in LuaImplementableInterface

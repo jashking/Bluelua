@@ -21,6 +21,7 @@ public:
 	void BindDelegateOwner(UObject* InOwner);
 	void BindLuaFunction(UFunction* InSignatureFunction, int InLuaFunctionIndex);
 	void BindLuaFunctionOwner(int InLuaFunctionOwerIndex);
+	void BindSignatureFunction(UFunction* InSignatureFunction);
 	void ReleaseLuaFunction();
 	bool IsBound();
 

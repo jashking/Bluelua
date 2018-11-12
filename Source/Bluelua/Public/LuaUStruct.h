@@ -15,8 +15,6 @@ public:
 	static int Push(lua_State* L, UScriptStruct* InSource, void* InBuffer = nullptr);
 	static bool Fetch(lua_State* L, int32 Index, UScriptStruct* OutStruct, uint8* OutBuffer);
 
-	static const char* USTRUCT_METATABLE;
-
 protected:
 	static int Index(lua_State* L);
 	static int NewIndex(lua_State* L);
@@ -26,4 +24,6 @@ protected:
 protected:
 	UScriptStruct* Source;
 	uint8* ScriptBuffer;
+
+	static const char* USTRUCT_METATABLE;
 };

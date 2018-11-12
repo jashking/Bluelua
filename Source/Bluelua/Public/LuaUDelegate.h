@@ -11,6 +11,8 @@ public:
 	~FLuaUDelegate();
 
 	static int Push(lua_State* L, UObject* Owner, void* InSource, UFunction* InFunction, bool InbIsMulticast, void* InBuffer = nullptr);
+	static bool Fetch(lua_State* L, int32 Index, UFunction* InFunction, FScriptDelegate* InScriptDelegate);
+	static int CreateDelegate(lua_State* L);
 
 protected:
 	static int Index(lua_State* L);

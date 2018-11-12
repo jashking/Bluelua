@@ -46,7 +46,7 @@ void ULuaDelegateCaller::BeginDestroy()
 
 ULuaDelegateCaller* ULuaDelegateCaller::CreateDelegate(UObject* InDelegateOwner, TSharedPtr<FLuaState> InLuaState, UFunction* InSignatureFunction, int InLuaFunctionIndex)
 {
-	if (!InLuaState.IsValid() || !InSignatureFunction)
+	if (!InLuaState.IsValid())
 	{
 		return nullptr;
 	}
@@ -93,6 +93,11 @@ void ULuaDelegateCaller::BindLuaFunction(UFunction* InSignatureFunction, int InL
 void ULuaDelegateCaller::BindLuaFunctionOwner(int InLuaFunctionOwerIndex)
 {
 	LuaFunctionOwnerIndex = InLuaFunctionOwerIndex;
+}
+
+void ULuaDelegateCaller::BindSignatureFunction(UFunction* InSignatureFunction)
+{
+	SignatureFunction = InSignatureFunction;
 }
 
 void ULuaDelegateCaller::ReleaseLuaFunction()
