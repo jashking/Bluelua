@@ -118,6 +118,31 @@ int FLuaUDelegate::CreateDelegate(lua_State* L)
 	return 1;
 }
 
+int FLuaUDelegate::DeleteDelegate(lua_State* L)
+{
+	UObject* UserData = (UObject*)lua_touserdata(L, 1);
+	ULuaDelegateCaller* LuaDelegateCaller = Cast<ULuaDelegateCaller>(UserData);
+	if (!LuaDelegateCaller)
+	{
+		luaL_error(L, "Param %d is not a ULuaDelegateCaller", Index);
+	}
+
+	if (!LuaDelegateCaller->IsValidLowLevel())
+	{
+		return 0;
+	}
+
+	LuaDelegateCaller->ReleaseLuaFunction();
+
+	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
+	if (LuaStateWrapper)
+	{
+		LuaStateWrapper->RemoveDelegateReference(LuaDelegateCaller);
+	}
+
+	return 0;
+}
+
 int FLuaUDelegate::Index(lua_State* L)
 {
 	FLuaUDelegate* LuaUDelegate = (FLuaUDelegate*)luaL_checkudata(L, 1, UDELEGATE_METATABLE);
