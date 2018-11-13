@@ -70,6 +70,11 @@ int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bOwnedByLua/* = fals
 
 UObject* FLuaUObject::Fetch(lua_State* L, int32 Index)
 {
+	if (lua_isnil(L, Index))
+	{
+		return nullptr;
+	}
+
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, Index, UOBJECT_METATABLE);
 
 	return LuaUObject->Source.IsValid() ? LuaUObject->Source.Get() : nullptr;

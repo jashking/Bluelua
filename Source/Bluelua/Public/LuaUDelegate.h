@@ -14,6 +14,7 @@ public:
 	static bool Fetch(lua_State* L, int32 Index, UFunction* InFunction, FScriptDelegate* InScriptDelegate);
 	static int CreateDelegate(lua_State* L);
 	static int DeleteDelegate(lua_State* L);
+	static int CreateLatentAction(lua_State* L);
 
 protected:
 	static int Index(lua_State* L);

@@ -28,6 +28,8 @@ public:
 	UFUNCTION()
 	void NeverUsed() {}
 
+	static const TCHAR* DelegateFunctionName;
+
 protected:
 	TWeakPtr<FLuaState> LuaState;
 	TWeakObjectPtr<UObject> DelegateOwner;

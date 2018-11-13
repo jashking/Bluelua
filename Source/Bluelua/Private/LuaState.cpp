@@ -53,6 +53,7 @@ FLuaState::FLuaState()
 		lua_register(L, "getEnum", GetEnumValue);
 		lua_register(L, "createDelegate", &FLuaUDelegate::CreateDelegate);
 		lua_register(L, "deleteDelegate", &FLuaUDelegate::DeleteDelegate);
+		lua_register(L, "createLatentAction", &FLuaUDelegate::CreateLatentAction);
 
 		// bind this to L
 		*((void**)lua_getextraspace(L)) = this;
@@ -184,7 +185,7 @@ bool FLuaState::CallLuaFunction(UFunction* SignatureFunction, void* Parameters, 
 		return false;
 	}
 
-	if (ReturnValue || SignatureFunction->HasAnyFunctionFlags(FUNC_HasOutParms))
+	if (ReturnValue || (SignatureFunction && SignatureFunction->HasAnyFunctionFlags(FUNC_HasOutParms)))
 	{
 		lua_pushinteger(L, OutParamsCount);
 		lua_insert(L, -(OutParamsCount + 1));

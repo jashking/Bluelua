@@ -63,6 +63,11 @@ int FLuaUClass::Push(lua_State* L, UClass* InSource)
 
 UClass* FLuaUClass::Fetch(lua_State* L, int32 Index)
 {
+	if (lua_isnil(L, Index))
+	{
+		return nullptr;
+	}
+
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, Index, UCLASS_METATABLE);
 
 	return LuaUClass->Source;

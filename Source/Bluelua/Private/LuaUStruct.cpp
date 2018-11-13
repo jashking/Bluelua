@@ -64,7 +64,7 @@ int FLuaUStruct::Push(lua_State* L, UScriptStruct* InSource, void* InBuffer /*= 
 
 bool FLuaUStruct::Fetch(lua_State* L, int32 Index, UScriptStruct* OutStruct, uint8* OutBuffer)
 {
-	if (!OutStruct)
+	if (!OutStruct || lua_isnil(L, Index))
 	{
 		return false;
 	}

@@ -1,5 +1,7 @@
 #include "LuaUDelegate.h"
 
+#include "Engine/LatentActionManager.h"
+#include "Misc/Guid.h"
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 
@@ -79,7 +81,7 @@ bool FLuaUDelegate::Fetch(lua_State* L, int32 Index, UFunction* InFunction, FScr
 	}
 
 	LuaDelegateCaller->BindSignatureFunction(InFunction);
-	InScriptDelegate->BindUFunction(LuaDelegateCaller, TEXT("NeverUsed"));
+	InScriptDelegate->BindUFunction(LuaDelegateCaller, ULuaDelegateCaller::DelegateFunctionName);
 
 	return true;
 }
@@ -143,6 +145,24 @@ int FLuaUDelegate::DeleteDelegate(lua_State* L)
 	return 0;
 }
 
+int FLuaUDelegate::CreateLatentAction(lua_State* L)
+{
+	UObject* UserData = (UObject*)lua_touserdata(L, 1);
+	ULuaDelegateCaller* LuaDelegateCaller = Cast<ULuaDelegateCaller>(UserData);
+	if (!LuaDelegateCaller)
+	{
+		luaL_error(L, "Param %d is not a ULuaDelegateCaller", Index);
+	}
+
+	FGuid Guid = FGuid::NewGuid();
+
+	FLatentActionInfo LatentActionInfo(0, GetTypeHash(Guid), ULuaDelegateCaller::DelegateFunctionName, LuaDelegateCaller);
+
+	FLuaUStruct::Push(L, FLatentActionInfo::StaticStruct(), (void*)&LatentActionInfo);
+
+	return 1;
+}
+
 int FLuaUDelegate::Index(lua_State* L)
 {
 	FLuaUDelegate* LuaUDelegate = (FLuaUDelegate*)luaL_checkudata(L, 1, UDELEGATE_METATABLE);
@@ -197,7 +217,7 @@ int FLuaUDelegate::Add(lua_State* L)
 	if (LuaUDelegate->bIsMulticast)
 	{
 		FScriptDelegate Delegate;
-		Delegate.BindUFunction(LuaDelegateCaller, TEXT("NeverUsed"));
+		Delegate.BindUFunction(LuaDelegateCaller, ULuaDelegateCaller::DelegateFunctionName);
 
 		FMulticastScriptDelegate* MulticastScriptDelegate = reinterpret_cast<FMulticastScriptDelegate*>(LuaUDelegate->Source);
 		MulticastScriptDelegate->AddUnique(Delegate);
@@ -205,7 +225,7 @@ int FLuaUDelegate::Add(lua_State* L)
 	else
 	{
 		FScriptDelegate* ScriptDelegate = reinterpret_cast<FScriptDelegate*>(LuaUDelegate->Source);
-		ScriptDelegate->BindUFunction(LuaDelegateCaller, TEXT("NeverUsed"));
+		ScriptDelegate->BindUFunction(LuaDelegateCaller, ULuaDelegateCaller::DelegateFunctionName);
 	}
 
 	lua_pushlightuserdata(L, LuaDelegateCaller);

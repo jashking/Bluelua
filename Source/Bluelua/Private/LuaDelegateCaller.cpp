@@ -9,10 +9,12 @@
 #include "LuaState.h"
 #include "LuaStackGuard.h"
 
+const TCHAR* ULuaDelegateCaller::DelegateFunctionName = TEXT("NeverUsed");
+
 void ULuaDelegateCaller::ProcessEvent(UFunction* Function, void* Parameters)
 {
-	if (!LuaState.IsValid() || !SignatureFunction || LuaFunctionIndex == LUA_NOREF
-		|| !Function || !Function->GetName().Equals(TEXT("NeverUsed")))
+	if (!LuaState.IsValid() || LuaFunctionIndex == LUA_NOREF
+		|| !Function || !Function->GetName().Equals(DelegateFunctionName))
 	{
 		return;
 	}
