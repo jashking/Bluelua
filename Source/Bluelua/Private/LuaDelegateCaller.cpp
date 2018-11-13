@@ -51,7 +51,7 @@ ULuaDelegateCaller* ULuaDelegateCaller::CreateDelegate(UObject* InDelegateOwner,
 		return nullptr;
 	}
 
-	ULuaDelegateCaller* LuaDelegateCaller = NewObject<ULuaDelegateCaller>(GetTransientPackage(), ULuaDelegateCaller::StaticClass(), NAME_None);
+	ULuaDelegateCaller* LuaDelegateCaller = NewObject<ULuaDelegateCaller>(InDelegateOwner, ULuaDelegateCaller::StaticClass(), NAME_None);
 	if (!LuaDelegateCaller)
 	{
 		return nullptr;
