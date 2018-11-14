@@ -2,6 +2,13 @@
 
 #include "LuaImplementableWidget.h"
 
+void ULuaImplementableWidget::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+	PreRegisterLua(LuaFilePath);
+}
+
 void ULuaImplementableWidget::ProcessEvent(UFunction* Function, void* Parameters)
 {
 	if (!OnProcessEvent(Function, Parameters))

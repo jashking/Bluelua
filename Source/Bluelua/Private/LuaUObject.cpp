@@ -7,6 +7,7 @@
 
 #include "lua.hpp"
 #include "LuaState.h"
+#include "LuaImplementableInterface.h"
 
 const char* FLuaUObject::UOBJECT_METATABLE = "UObject_Metatable";
 
@@ -150,6 +151,11 @@ int FLuaUObject::Index(lua_State* L)
 	{
 		return FLuaObjectBase::PushProperty(L, Property, LuaUObject->Source.Get());
 	}
+	else if (FCStringAnsi::Strcmp(PropertyName, "ToLuaObject") == 0)
+	{
+		lua_pushcfunction(L, ToLuaObject);
+		return 1;
+	}
 
 	return 0;
 }
@@ -216,4 +222,28 @@ int FLuaUObject::GC(lua_State* L)
 	LuaUObject->Source.Reset();
 
 	return 0;
+}
+
+int FLuaUObject::ToLuaObject(lua_State* L)
+{
+	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
+	if (!LuaUObject->Source.IsValid())
+	{
+		return 0;
+	}
+
+	ILuaImplementableInterface* LuaImplementableInterface = Cast<ILuaImplementableInterface>(LuaUObject->Source);
+	if (!LuaImplementableInterface)
+	{
+		return 0;
+	}
+
+	if (!LuaImplementableInterface->IsLuaBound())
+	{
+		FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
+
+		LuaImplementableInterface->PreInit(LuaStateWrapper->AsShared());
+	}
+
+	return (LuaImplementableInterface->FetchLuaModule() ? 1 : 0);
 }

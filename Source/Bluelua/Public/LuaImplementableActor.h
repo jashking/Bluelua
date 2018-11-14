@@ -18,6 +18,7 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
+	virtual void PostInitProperties() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void ProcessEvent(UFunction* Function, void* Parameters) override final;

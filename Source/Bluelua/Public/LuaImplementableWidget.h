@@ -16,6 +16,7 @@ class BLUELUA_API ULuaImplementableWidget : public UUserWidget, public ILuaImple
 	GENERATED_BODY()
 
 protected:
+	virtual void PostInitProperties() override;
 	virtual void ProcessEvent(UFunction* Function, void* Parameters) override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;

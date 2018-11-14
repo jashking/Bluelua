@@ -35,15 +35,67 @@ private:
 	const char* GlobalName;
 };
 
+void ILuaImplementableInterface::PreInit(TSharedPtr<FLuaState> InLuaState /*= nullptr*/)
+{
+	OnInit(BindingLuaPath, InLuaState);
+}
+
+bool ILuaImplementableInterface::IsLuaBound() const
+{
+	return (LuaState.IsValid() && ModuleReferanceIndex != LUA_NOREF);
+}
+
+bool ILuaImplementableInterface::FetchLuaModule()
+{
+	if (IsLuaBound())
+	{
+		lua_rawgeti(LuaState->GetState(), LUA_REGISTRYINDEX, ModuleReferanceIndex);
+		if (lua_type(LuaState->GetState(), -1) != LUA_TTABLE)
+		{
+			lua_pop(LuaState->GetState(), 1);
+			return false;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+void ILuaImplementableInterface::PreRegisterLua(const FString& InLuaFilePath)
+{
+	if (!InLuaFilePath.IsEmpty())
+	{
+		BindingLuaPath = InLuaFilePath;
+	}
+}
+
 bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr<FLuaState> InLuaState/* = nullptr*/)
 {
-	OnRelease();
-
-	LuaState = InLuaState.IsValid() ? InLuaState : FBlueluaModule::Get().GetDefaultLuaState();
-	if (!LuaState.IsValid() || InLuaFilePath.IsEmpty())
+	if (InLuaFilePath.IsEmpty())
 	{
 		return false;
 	}
+
+	if (!BindingLuaPath.Equals(BindingLuaPath))
+	{
+		// new lua file
+		OnRelease();
+	}
+
+	if (IsLuaBound())
+	{
+		// already init
+		return true;
+	}
+
+	LuaState = InLuaState.IsValid() ? InLuaState : FBlueluaModule::Get().GetDefaultLuaState();
+	if (!LuaState.IsValid())
+	{
+		return false;
+	}
+
+	BindingLuaPath = InLuaFilePath;
 
 	lua_State* L = LuaState->GetState();
 	FLuaStackGuard StackGuard(L);
