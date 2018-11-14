@@ -23,9 +23,9 @@ public:
 	bool AddToCache(void* InObject);
 
 	void AddReference(UObject* Object);
+	void AddReference(UObject* Object, UObject* Owner);
 	void RemoveReference(UObject* Object);
-	void AddDelegateReference(ULuaDelegateCaller* LuaDelegateCaller);
-	void RemoveDelegateReference(ULuaDelegateCaller* LuaDelegateCaller);
+	void RemoveReference(UObject* Object, UObject* Owner);
 
 	// Begin FGCObject interface
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
@@ -54,7 +54,7 @@ protected:
 	int CacheObjectRefIndex;
 
 	TSet<UObject*> ReferencedObjects;
-	TSet<ULuaDelegateCaller*> DelegateReferencedObjects;
+	TMap<UObject*, TWeakObjectPtr<UObject>> ReferencedObjectsWithOwner;
 
 	FDelegateHandle PostGarbageCollectDelegate;
 };

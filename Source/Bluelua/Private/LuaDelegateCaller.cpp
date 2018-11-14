@@ -59,7 +59,6 @@ ULuaDelegateCaller* ULuaDelegateCaller::CreateDelegate(UObject* InDelegateOwner,
 		return nullptr;
 	}
 
-	LuaDelegateCaller->BindDelegateOwner(InDelegateOwner);
 	LuaDelegateCaller->BindLuaState(InLuaState);
 
 	lua_pushvalue(InLuaState->GetState(), InLuaFunctionIndex);
@@ -77,11 +76,6 @@ ULuaDelegateCaller* ULuaDelegateCaller::CreateDelegate(UObject* InDelegateOwner,
 void ULuaDelegateCaller::BindLuaState(TSharedPtr<FLuaState> InLuaState)
 {
 	LuaState = InLuaState;
-}
-
-void ULuaDelegateCaller::BindDelegateOwner(UObject* InOwner)
-{
-	DelegateOwner = InOwner;
 }
 
 void ULuaDelegateCaller::BindLuaFunction(UFunction* InSignatureFunction, int InLuaFunctionIndex)
@@ -121,9 +115,4 @@ void ULuaDelegateCaller::ReleaseLuaFunction()
 
 	LuaFunctionIndex = LUA_NOREF;
 	LuaFunctionOwnerIndex = LUA_NOREF;
-}
-
-bool ULuaDelegateCaller::IsBound()
-{
-	return DelegateOwner.IsValid();
 }

@@ -115,7 +115,7 @@ int FLuaUDelegate::CreateDelegate(lua_State* L)
 	}
 
 	lua_pushlightuserdata(L, LuaDelegateCaller);
-	LuaStateWrapper->AddDelegateReference(LuaDelegateCaller);
+	LuaStateWrapper->AddReference(LuaDelegateCaller, DelegateOwner);
 
 	return 1;
 }
@@ -139,7 +139,7 @@ int FLuaUDelegate::DeleteDelegate(lua_State* L)
 	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
 	if (LuaStateWrapper)
 	{
-		LuaStateWrapper->RemoveDelegateReference(LuaDelegateCaller);
+		LuaStateWrapper->RemoveReference(LuaDelegateCaller, LuaDelegateCaller->GetOuter());
 	}
 
 	return 0;
@@ -229,7 +229,7 @@ int FLuaUDelegate::Add(lua_State* L)
 	}
 
 	lua_pushlightuserdata(L, LuaDelegateCaller);
-	LuaStateWrapper->AddDelegateReference(LuaDelegateCaller);
+	LuaStateWrapper->AddReference(LuaDelegateCaller, LuaUDelegate->Owner);
 
 	return 1;
 }
@@ -249,7 +249,7 @@ int FLuaUDelegate::Remove(lua_State* L)
 	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
 	if (LuaStateWrapper)
 	{
-		LuaStateWrapper->RemoveDelegateReference(LuaDelegateCaller);
+		LuaStateWrapper->RemoveReference(LuaDelegateCaller, LuaDelegateCaller->GetOuter());
 	}
 
 	return 0;

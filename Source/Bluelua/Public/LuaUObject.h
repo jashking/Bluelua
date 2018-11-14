@@ -7,11 +7,14 @@
 class BLUELUA_API FLuaUObject : public FLuaObjectBase
 {
 public:
-	FLuaUObject(UObject* InSource, bool InbOwnedByLua);
+	FLuaUObject(UObject* InSource, bool InbRef);
 	~FLuaUObject();
 
-	static int Push(lua_State* L, UObject* InSource, bool bOwnedByLua = false);
+	static int Push(lua_State* L, UObject* InSource, bool bRef = false);
 	static UObject* Fetch(lua_State* L, int32 Index);
+
+	static int LuaLoadObject(lua_State* L);
+	static int LuaUnLoadObject(lua_State* L);
 
 protected:
 	static int Index(lua_State* L);
@@ -22,7 +25,7 @@ protected:
 
 protected:
 	TWeakObjectPtr<UObject> Source;
-	bool bOwnedByLua;
+	bool bRef;
 
 	static const char* UOBJECT_METATABLE;
 };

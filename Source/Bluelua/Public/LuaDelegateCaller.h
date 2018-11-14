@@ -18,12 +18,10 @@ public:
 	static ULuaDelegateCaller* CreateDelegate(UObject* InDelegateOwner, TSharedPtr<FLuaState> InLuaState, UFunction* InSignatureFunction, int InLuaFunctionIndex);
 
 	void BindLuaState(TSharedPtr<FLuaState> InLuaState);
-	void BindDelegateOwner(UObject* InOwner);
 	void BindLuaFunction(UFunction* InSignatureFunction, int InLuaFunctionIndex);
 	void BindLuaFunctionOwner(int InLuaFunctionOwerIndex);
 	void BindSignatureFunction(UFunction* InSignatureFunction);
 	void ReleaseLuaFunction();
-	bool IsBound();
 
 	UFUNCTION()
 	void NeverUsed() {}
@@ -32,7 +30,6 @@ public:
 
 protected:
 	TWeakPtr<FLuaState> LuaState;
-	TWeakObjectPtr<UObject> DelegateOwner;
 
 	UFunction* SignatureFunction = nullptr;
 	int LuaFunctionIndex = -2;

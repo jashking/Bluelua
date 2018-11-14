@@ -10,9 +10,9 @@
 
 const char* FLuaUObject::UOBJECT_METATABLE = "UObject_Metatable";
 
-FLuaUObject::FLuaUObject(UObject* InSource, bool InbOwnedByLua)
+FLuaUObject::FLuaUObject(UObject* InSource, bool InbRef)
 	: Source(InSource)
-	, bOwnedByLua(InbOwnedByLua)
+	, bRef(bRef)
 {
 
 }
@@ -22,7 +22,7 @@ FLuaUObject::~FLuaUObject()
 
 }
 
-int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bOwnedByLua/* = false*/)
+int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bRef/* = false*/)
 {
 	if (!InSource)
 	{
@@ -37,7 +37,7 @@ int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bOwnedByLua/* = fals
 	}
 
 	void* Buffer = lua_newuserdata(L, sizeof(FLuaUObject));
-	FLuaUObject* LuaUObject = new(Buffer) FLuaUObject(InSource, bOwnedByLua);
+	FLuaUObject* LuaUObject = new(Buffer) FLuaUObject(InSource, bRef);
 
 	if (luaL_newmetatable(L, UOBJECT_METATABLE))
 	{
@@ -59,7 +59,7 @@ int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bOwnedByLua/* = fals
 	{
 		LuaStateWrapper->AddToCache(InSource);
 
-		if (bOwnedByLua)
+		if (bRef)
 		{
 			LuaStateWrapper->AddReference(InSource);
 		}
@@ -78,6 +78,49 @@ UObject* FLuaUObject::Fetch(lua_State* L, int32 Index)
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, Index, UOBJECT_METATABLE);
 
 	return LuaUObject->Source.IsValid() ? LuaUObject->Source.Get() : nullptr;
+}
+
+int FLuaUObject::LuaLoadObject(lua_State* L)
+{
+	UObject* Owner = FLuaUObject::Fetch(L, 1);
+	if (!Owner)
+	{
+		return 0;
+	}
+
+	const char* ObjectPath = lua_tostring(L, 2);
+	if (!ObjectPath)
+	{
+		return 0;
+	}
+
+	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
+	if (!LuaStateWrapper)
+	{
+		return 0;
+	}
+
+	UObject* Object = LoadObject<UObject>(Owner, UTF8_TO_TCHAR(ObjectPath));
+	LuaStateWrapper->AddReference(Object, Owner);
+
+	return FLuaUObject::Push(L, Object, false);
+}
+
+int FLuaUObject::LuaUnLoadObject(lua_State* L)
+{
+	UObject* Object = FLuaUObject::Fetch(L, 1);
+	if (!Object)
+	{
+		return 0;
+	}
+
+	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
+	if (LuaStateWrapper)
+	{
+		LuaStateWrapper->RemoveReference(Object, Object->GetOuter());
+	}
+
+	return 0;
 }
 
 int FLuaUObject::Index(lua_State* L)
@@ -165,7 +208,7 @@ int FLuaUObject::GC(lua_State* L)
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
 
 	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
-	if (LuaStateWrapper && LuaUObject && LuaUObject->bOwnedByLua)
+	if (LuaStateWrapper && LuaUObject && LuaUObject->bRef)
 	{
 		LuaStateWrapper->RemoveReference(LuaUObject->Source.Get());
 	}

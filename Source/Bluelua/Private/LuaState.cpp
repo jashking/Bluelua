@@ -15,6 +15,7 @@
 #include "LuaStackGuard.h"
 #include "LuaUClass.h"
 #include "LuaUDelegate.h"
+#include "LuaUObject.h"
 #include "LuaUScriptStruct.h"
 
 DECLARE_DWORD_ACCUMULATOR_STAT(TEXT("LuaMemory"), STAT_LuaMemory, STATGROUP_Bluelua);
@@ -48,6 +49,8 @@ FLuaState::FLuaState()
 		}
 
 		lua_register(L, "print", LuaPrint);
+		lua_register(L, "loadObject", &FLuaUObject::LuaLoadObject);
+		lua_register(L, "unloadObject", &FLuaUObject::LuaUnLoadObject);
 		lua_register(L, "loadClass", LuaLoadClass);
 		lua_register(L, "loadStruct", LuaLoadStruct);
 		lua_register(L, "getEnum", GetEnumValue);
@@ -245,25 +248,25 @@ void FLuaState::AddReference(UObject* Object)
 	ReferencedObjects.Emplace(Object);
 }
 
+void FLuaState::AddReference(UObject* Object, UObject* Owner)
+{
+	ReferencedObjectsWithOwner.FindOrAdd(Object) = Owner;
+}
+
 void FLuaState::RemoveReference(UObject* Object)
 {
 	ReferencedObjects.Remove(Object);
 }
 
-void FLuaState::AddDelegateReference(ULuaDelegateCaller* LuaDelegateCaller)
+void FLuaState::RemoveReference(UObject* Object, UObject* Owner)
 {
-	DelegateReferencedObjects.Emplace(LuaDelegateCaller);
-}
-
-void FLuaState::RemoveDelegateReference(ULuaDelegateCaller* LuaDelegateCaller)
-{
-	DelegateReferencedObjects.Remove(LuaDelegateCaller);
+	ReferencedObjectsWithOwner.Remove(Object);
 }
 
 void FLuaState::AddReferencedObjects(FReferenceCollector& Collector)
 {
 	Collector.AddReferencedObjects(ReferencedObjects);
-	Collector.AddReferencedObjects(DelegateReferencedObjects);
+	Collector.AddReferencedObjects(ReferencedObjectsWithOwner);
 }
 
 FString FLuaState::GetReferencerName() const
@@ -436,23 +439,18 @@ int FLuaState::FillOutProperty(lua_State* L)
 
 void FLuaState::OnPostGarbageCollect()
 {
-	TSet<ULuaDelegateCaller*> DelegatesNeedGC;
+	TSet<UObject*> ObjectsNeedGC;
 
-	for (auto DelegateCaller : DelegateReferencedObjects)
+	for (auto Object : ReferencedObjectsWithOwner)
 	{
-		if (!DelegateCaller || !DelegateCaller->IsBound())
+		if (Object.Value.IsValid())
 		{
-			DelegatesNeedGC.Emplace(DelegateCaller);
+			ObjectsNeedGC.Emplace(Object.Key);
 		}
 	}
 
-	for (auto DelegateCaller : DelegatesNeedGC)
+	for (auto Object : ObjectsNeedGC)
 	{
-		if (DelegateCaller)
-		{
-			DelegateCaller->ReleaseLuaFunction();
-		}
-
-		DelegateReferencedObjects.Remove(DelegateCaller);
+		ReferencedObjectsWithOwner.Remove(Object);
 	}
 }
