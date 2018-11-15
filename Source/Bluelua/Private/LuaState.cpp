@@ -49,14 +49,14 @@ FLuaState::FLuaState()
 		}
 
 		lua_register(L, "print", LuaPrint);
-		lua_register(L, "loadObject", &FLuaUObject::LuaLoadObject);
-		lua_register(L, "unloadObject", &FLuaUObject::LuaUnLoadObject);
-		lua_register(L, "loadClass", LuaLoadClass);
-		lua_register(L, "loadStruct", LuaLoadStruct);
-		lua_register(L, "getEnum", GetEnumValue);
-		lua_register(L, "createDelegate", &FLuaUDelegate::CreateDelegate);
-		lua_register(L, "deleteDelegate", &FLuaUDelegate::DeleteDelegate);
-		lua_register(L, "createLatentAction", &FLuaUDelegate::CreateLatentAction);
+		lua_register(L, "LoadObject", &FLuaUObject::LuaLoadObject);
+		lua_register(L, "UnloadObject", &FLuaUObject::LuaUnLoadObject);
+		lua_register(L, "LoadClass", LuaLoadClass);
+		lua_register(L, "LoadStruct", LuaLoadStruct);
+		lua_register(L, "GetEnum", GetEnumValue);
+		lua_register(L, "CreateDelegate", &FLuaUDelegate::CreateDelegate);
+		lua_register(L, "DeleteDelegate", &FLuaUDelegate::DeleteDelegate);
+		lua_register(L, "CreateLatentAction", &FLuaUDelegate::CreateLatentAction);
 
 		// bind this to L
 		*((void**)lua_getextraspace(L)) = this;
