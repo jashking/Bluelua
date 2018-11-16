@@ -68,7 +68,7 @@ int FLuaUDelegate::Push(lua_State* L, UObject* Owner, void* InSource, UFunction*
 
 bool FLuaUDelegate::Fetch(lua_State* L, int32 Index, UFunction* InFunction, FScriptDelegate* InScriptDelegate)
 {
-	if (!InScriptDelegate || !InFunction)
+	if (!InScriptDelegate || !InFunction || lua_isnil(L, Index))
 	{
 		return false;
 	}
