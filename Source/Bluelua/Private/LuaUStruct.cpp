@@ -98,7 +98,7 @@ int FLuaUStruct::Index(lua_State* L)
 	}
 
 	const char* PropertyName = lua_tostring(L, 2);
-	if (UProperty* Property = LuaUStruct->Source->FindPropertyByName(PropertyName))
+	if (UProperty* Property = FindStructPropertyByName(LuaUStruct->Source, PropertyName))
 	{
 		return FLuaObjectBase::PushProperty(L, Property, LuaUStruct->ScriptBuffer);
 	}
@@ -115,7 +115,7 @@ int FLuaUStruct::NewIndex(lua_State* L)
 	}
 
 	const char* PropertyName = lua_tostring(L, 2);
-	UProperty* Property = LuaUStruct->Source->FindPropertyByName(PropertyName);
+	UProperty* Property = FindStructPropertyByName(LuaUStruct->Source, PropertyName);
 	if (Property)
 	{
 		if (Property->PropertyFlags & CPF_BlueprintReadOnly)
@@ -158,4 +158,23 @@ int FLuaUStruct::ToString(lua_State* L)
 	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UStruct[%s]"), LuaUStruct->Source ? *(LuaUStruct->Source->GetName()) : TEXT("null"))));
 
 	return 1;
+}
+
+class UProperty* FLuaUStruct::FindStructPropertyByName(UScriptStruct* Source, FName Name)
+{
+	UProperty* Property = Source->FindPropertyByName(Name);
+	if (Property)
+	{
+		return Property;
+	}
+
+	for (Property = Source->PropertyLink; Property != nullptr; Property = Property->PropertyLinkNext)
+	{
+		if (Property->GetFName().ToString().StartsWith(Name.ToString(), ESearchCase::CaseSensitive))
+		{
+			return Property;
+		}
+	}
+
+	return nullptr;
 }

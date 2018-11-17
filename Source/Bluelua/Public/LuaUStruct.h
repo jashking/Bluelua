@@ -21,6 +21,8 @@ protected:
 	static int GC(lua_State* L);
 	static int ToString(lua_State* L);
 
+	static class UProperty* FindStructPropertyByName(UScriptStruct* Source, FName Name);
+
 protected:
 	UScriptStruct* Source;
 	uint8* ScriptBuffer;
