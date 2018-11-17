@@ -263,6 +263,17 @@ void FLuaState::RemoveReference(UObject* Object, UObject* Owner)
 	ReferencedObjectsWithOwner.Remove(Object);
 }
 
+void FLuaState::GetObjectsByOwner(UObject* Owner, TSet<UObject*>& Objects)
+{
+	for (auto Object : ReferencedObjectsWithOwner)
+	{
+		if (Object.Value.IsValid() && Object.Value.Get() == Owner && Object.Key->IsValidLowLevel())
+		{
+			Objects.Emplace(Object.Key);
+		}
+	}
+}
+
 void FLuaState::AddReferencedObjects(FReferenceCollector& Collector)
 {
 	Collector.AddReferencedObjects(ReferencedObjects);

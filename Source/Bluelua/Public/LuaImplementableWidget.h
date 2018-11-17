@@ -20,6 +20,9 @@ protected:
 	virtual void ProcessEvent(UFunction* Function, void* Parameters) override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	void TickActions(float InDeltaTime);
 
 protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LuaImplementable", meta = (AllowPrivateAccess = "true"))
