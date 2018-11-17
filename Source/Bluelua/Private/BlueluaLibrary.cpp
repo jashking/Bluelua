@@ -6,5 +6,10 @@
 
 UObject* UBlueluaLibrary::GetWorldContext()
 {
-	return Cast<UObject>(GEngine->GameViewport->GetWorld());
+	if (GEngine && GEngine->GameViewport)
+	{
+		return Cast<UObject>(GEngine->GameViewport->GetWorld());
+	}
+
+	return nullptr;
 }
