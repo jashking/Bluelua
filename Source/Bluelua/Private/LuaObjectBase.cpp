@@ -397,7 +397,8 @@ bool FLuaObjectBase::FetchArrayProperty(lua_State* L, UProperty* Property, void*
 {
 	if (LUA_TTABLE != lua_type(L, Index))
 	{
-		luaL_error(L, "Param %d is not a table!", Index);
+		//luaL_error(L, "Param %d is not a table!", Index);
+		return false;
 	}
 
 	if (auto ArrayProperty = Cast<UArrayProperty>(Property))
@@ -434,7 +435,8 @@ bool FLuaObjectBase::FetchSetProperty(lua_State* L, UProperty* Property, void* P
 {
 	if (LUA_TTABLE != lua_type(L, Index))
 	{
-		luaL_error(L, "Param %d is not a table!", Index);
+		//luaL_error(L, "Param %d is not a table!", Index);
+		return false;
 	}
 
 	if (auto SetProperty = Cast<USetProperty>(Property))
@@ -460,7 +462,8 @@ bool FLuaObjectBase::FetchMapProperty(lua_State* L, UProperty* Property, void* P
 {
 	if (LUA_TTABLE != lua_type(L, Index))
 	{
-		luaL_error(L, "Param %d is not a table!", Index);
+		//luaL_error(L, "Param %d is not a table!", Index);
+		return false;
 	}
 
 	if (auto MapProperty = Cast<UMapProperty>(Property))
