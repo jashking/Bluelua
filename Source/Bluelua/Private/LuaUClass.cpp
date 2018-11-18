@@ -5,6 +5,7 @@
 #include "UObject/UnrealType.h"
 
 #include "lua.hpp"
+#include "LuaObjectBase.h"
 #include "LuaState.h"
 #include "LuaUObject.h"
 
@@ -44,6 +45,7 @@ int FLuaUClass::Push(lua_State* L, UClass* InSource)
 		{
 			{ "__call", Construct },
 			{ "__index", Index },
+			{ "__newindex", NewIndex },
 			{ "__tostring", ToString },
 			{ NULL, NULL },
 		};
@@ -118,6 +120,39 @@ int FLuaUClass::Index(lua_State* L)
 		lua_pushcclosure(L, CallStaticUFunction, 1);
 
 		return 1;
+	}
+	else if (UProperty* Property = LuaUClass->Source->FindPropertyByName(PropertyName))
+	{
+		return FLuaObjectBase::PushProperty(L, Property, LuaUClass->Source->GetDefaultObject());
+	}
+
+	return 0;
+}
+
+int FLuaUClass::NewIndex(lua_State* L)
+{
+	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
+	if (!LuaUClass->Source)
+	{
+		return 0;
+	}
+
+	UObject* ClassDefaultObject = LuaUClass->Source->GetDefaultObject();
+	const char* PropertyName = lua_tostring(L, 2);
+
+	UProperty* Property = LuaUClass->Source->FindPropertyByName(PropertyName);
+	if (Property)
+	{
+		if (Property->PropertyFlags & CPF_BlueprintReadOnly)
+		{
+			luaL_error(L, "Can't write to a readonly property[%s] in class[%s]!", PropertyName, TCHAR_TO_UTF8(*(LuaUClass->Source->GetName())));
+		}
+
+		FLuaObjectBase::FetchProperty(L, Property, ClassDefaultObject, 3);
+	}
+	else
+	{
+		luaL_error(L, "Can't find property[%s] in class[%s]!", PropertyName, TCHAR_TO_UTF8(*(LuaUClass->Source->GetName())));
 	}
 
 	return 0;

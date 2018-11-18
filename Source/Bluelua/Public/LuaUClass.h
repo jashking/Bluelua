@@ -16,6 +16,7 @@ public:
 protected:
 	static int Construct(lua_State* L);
 	static int Index(lua_State* L);
+	static int NewIndex(lua_State* L);
 	static int ToString(lua_State* L);
 	static int CallStaticUFunction(lua_State* L);
 
