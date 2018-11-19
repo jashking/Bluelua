@@ -596,7 +596,7 @@ bool FLuaObjectBase::Fetch(lua_State* L, int32 Index, double& Value)
 
 bool FLuaObjectBase::Fetch(lua_State* L, int32 Index, bool& Value)
 {
-	Value = lua_toboolean(L, Index);
+	Value = (bool)lua_toboolean(L, Index);
 
 	return true;
 }
