@@ -48,6 +48,23 @@ FLuaState::FLuaState()
 			lua_pop(L, 1);
 		}
 
+		// add custom searcher to the beginning of package.searchers: preload, custom, lua, c
+		lua_pushcfunction(L, LuaSearcher);
+		const int CustomSearcherIndex = lua_gettop(L);
+
+		lua_getglobal(L, "package");
+		lua_getfield(L, -1, "searchers");
+
+		const int SearchersIndex = lua_gettop(L);
+
+		for (int i = lua_rawlen(L, SearchersIndex) + 1; i > 2; --i)
+		{
+			lua_rawgeti(L, SearchersIndex, i - 1);
+			lua_rawseti(L, SearchersIndex, i);
+		}
+		lua_pushvalue(L, CustomSearcherIndex);
+		lua_rawseti(L, SearchersIndex, 2);
+
 		lua_register(L, "print", LuaPrint);
 		lua_register(L, "LoadObject", &FLuaUObject::LuaLoadObject);
 		lua_register(L, "UnloadObject", &FLuaUObject::LuaUnLoadObject);
@@ -333,6 +350,52 @@ int FLuaState::LuaPrint(lua_State * L)
 	UE_LOG(LogBluelua, Display, TEXT("Lua log: %s"), *Message);
 
 	return 0;
+}
+
+int FLuaState::LuaSearcher(lua_State* L)
+{
+	const FString FileName = UTF8_TO_TCHAR(lua_tostring(L, 1));
+	const FString BaseFilePath = FPaths::Combine(FPaths::ProjectContentDir(), FileName.Replace(TEXT("."), TEXT("/")));
+
+	FString FullFilePath;
+	if (FPaths::FileExists(BaseFilePath + TEXT(".lua")))
+	{
+		FullFilePath = BaseFilePath + TEXT(".lua");
+	}
+	else if (FPaths::FileExists(BaseFilePath + TEXT(".luac")))
+	{
+		FullFilePath = BaseFilePath + TEXT(".luac");
+	}
+	else if (FPaths::FileExists(FPaths::Combine(BaseFilePath, TEXT("init.lua"))))
+	{
+		FullFilePath = FPaths::Combine(BaseFilePath, TEXT("init.lua"));
+	}
+	else if (FPaths::FileExists(FPaths::Combine(BaseFilePath, TEXT("init.luac"))))
+	{
+		FullFilePath = FPaths::Combine(BaseFilePath, TEXT("init.luac"));
+	}
+	else
+	{
+		UE_LOG(LogBluelua, Warning, TEXT("Lua require failed! File[%s] not exists!"), *FileName);
+		return 0;
+	}
+
+	TArray<uint8> FileContent;
+	if (!FFileHelper::LoadFileToArray(FileContent, *FullFilePath))
+	{
+		UE_LOG(LogBluelua, Warning, TEXT("Lua require failed! File[%s] load failed!"), *FileName);
+		return 0;
+	}
+
+	if (LUA_OK != luaL_loadbuffer(L, (const char *)FileContent.GetData(), FileContent.Num(), TCHAR_TO_UTF8(*FPaths::GetCleanFilename(FullFilePath))))
+	{
+		const char* ErrorInfo = lua_tostring(L, -1);
+		UE_LOG(LogBluelua, Error, TEXT("Lua require failed! Lua load buffer failed! %s"), UTF8_TO_TCHAR(ErrorInfo));
+
+		return 0;
+	}
+
+	return 1;
 }
 
 void* FLuaState::LuaAlloc(void* UserData, void* Ptr, size_t OldSize, size_t NewSize)

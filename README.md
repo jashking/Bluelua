@@ -18,7 +18,6 @@
 
 ## TODO ##
 
-* require (search path)
 * statistics
 * call BlueprintNativeEvent default implemention
 * call lua function in blueprint

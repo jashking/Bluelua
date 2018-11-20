@@ -39,6 +39,7 @@ protected:
 	static int LuaError(lua_State* L);
 	static int LuaPanic(lua_State* L);
 	static int LuaPrint(lua_State* L);
+	static int LuaSearcher(lua_State* L);
 	static void* LuaAlloc(void* UserData, void* Ptr, size_t OldSize, size_t NewSize);
 
 	static int LuaLoadClass(lua_State* L);
