@@ -4,6 +4,7 @@
 #include "Editor.h"
 
 #include "Bluelua.h"
+#include "LuaImplementableInterface.h"
 
 #define LOCTEXT_NAMESPACE "FBlueluaEditorModule"
 
@@ -18,6 +19,8 @@ void FBlueluaEditorModule::ShutdownModule()
 
 void FBlueluaEditorModule::OnEndPIE(bool bIsSimulating)
 {
+	ILuaImplementableInterface::CleanAllLuaImplementableObject();
+
 	FBlueluaModule::Get().ResetDefaultLuaState();
 }
 

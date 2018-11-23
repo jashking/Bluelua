@@ -24,6 +24,8 @@ public:
 	bool IsLuaBound() const;
 	bool FetchLuaModule();
 
+	static void CleanAllLuaImplementableObject(FLuaState* InLuaState = nullptr);
+	
 protected:
 	void PreRegisterLua(const FString& InLuaFilePath);
 
@@ -31,10 +33,14 @@ protected:
 	virtual void OnRelease();
 	virtual bool OnProcessEvent(UFunction* Function, void* Parameters);
 
+	static void AddToLuaObjectList(FLuaState* InLuaState, ILuaImplementableInterface* Object);
+
 protected:
 	TSharedPtr<FLuaState> LuaState;
 
 	FString BindingLuaPath;
 
 	int ModuleReferanceIndex = -2;
+
+	static TMap<FLuaState*, TSet<ILuaImplementableInterface*>> LuaImplementableObjects;
 };

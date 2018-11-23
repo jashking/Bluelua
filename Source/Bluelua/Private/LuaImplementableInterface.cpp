@@ -35,6 +35,8 @@ private:
 	const char* GlobalName;
 };
 
+TMap<FLuaState*, TSet<ILuaImplementableInterface*>> ILuaImplementableInterface::LuaImplementableObjects;
+
 void ILuaImplementableInterface::PreInit(TSharedPtr<FLuaState> InLuaState /*= nullptr*/)
 {
 	OnInit(BindingLuaPath, InLuaState);
@@ -60,6 +62,39 @@ bool ILuaImplementableInterface::FetchLuaModule()
 	}
 
 	return false;
+}
+
+void ILuaImplementableInterface::CleanAllLuaImplementableObject(FLuaState* InLuaState/* = nullptr*/)
+{
+	TArray<TSet<ILuaImplementableInterface*>*> PendingCleanObjects;
+	for (auto& Iter : LuaImplementableObjects)
+	{
+		if (!InLuaState || Iter.Key == InLuaState)
+		{
+			PendingCleanObjects.Emplace(&(Iter.Value));
+		}
+	}
+
+	for (auto& Iter : PendingCleanObjects)
+	{
+		for (auto& Interface : *Iter)
+		{
+			UObject* Object = Cast<UObject>(Interface);
+			if (Object && Object->IsValidLowLevel())
+			{
+				Interface->OnRelease();
+			}
+		}
+	}
+
+	if (InLuaState)
+	{
+		LuaImplementableObjects.Remove(InLuaState);
+	}
+	else
+	{
+		LuaImplementableObjects.Empty();
+	}
 }
 
 void ILuaImplementableInterface::PreRegisterLua(const FString& InLuaFilePath)
@@ -96,6 +131,7 @@ bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr
 	}
 
 	BindingLuaPath = InLuaFilePath;
+	AddToLuaObjectList(LuaState.Get(), this);
 
 	lua_State* L = LuaState->GetState();
 	FLuaStackGuard StackGuard(L);
@@ -160,4 +196,14 @@ bool ILuaImplementableInterface::OnProcessEvent(UFunction* Function, void* Param
 
 	// stack = [Module, Function, Module]
 	return LuaState->CallLuaFunction(Function, Parameters);
+}
+
+void ILuaImplementableInterface::AddToLuaObjectList(FLuaState* InLuaState, ILuaImplementableInterface* Object)
+{
+	if (!Object)
+	{
+		return;
+	}
+
+	LuaImplementableObjects.FindOrAdd(InLuaState).Emplace(Object);
 }
