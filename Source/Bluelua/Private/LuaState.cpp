@@ -426,7 +426,19 @@ int FLuaState::LuaLoadClass(lua_State* L)
 	const char* ClassName = lua_tostring(L, 1);
 	if (ClassName)
 	{
-		UClass* Class = FindObject<UClass>(ANY_PACKAGE, UTF8_TO_TCHAR(ClassName));
+		const FString ClassPath = UTF8_TO_TCHAR(ClassName);
+
+		UClass* Class = FindObject<UClass>(ANY_PACKAGE, *ClassPath);
+		if (!Class)
+		{
+			FString ObjectPath = ClassPath;
+
+			ObjectPath.RemoveFromEnd(TEXT("_C"), ESearchCase::CaseSensitive);
+			LoadObject<UObject>(nullptr, *ObjectPath);
+
+			Class = FindObject<UClass>(ANY_PACKAGE, *ClassPath);
+		}
+
 		if (Class)
 		{
 			return FLuaUClass::Push(L, Class);
@@ -444,6 +456,11 @@ int FLuaState::LuaLoadStruct(lua_State* L)
 	if (StructName)
 	{
 		UScriptStruct* ScriptStruct = FindObject<UScriptStruct>(ANY_PACKAGE, UTF8_TO_TCHAR(StructName));
+		if (!ScriptStruct)
+		{
+			ScriptStruct = LoadObject<UScriptStruct>(nullptr, UTF8_TO_TCHAR(StructName));
+		}
+
 		if (ScriptStruct)
 		{
 			return FLuaUScriptStruct::Push(L, ScriptStruct);
