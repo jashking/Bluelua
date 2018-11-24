@@ -539,7 +539,7 @@ void FLuaState::OnPostGarbageCollect()
 
 	for (auto Object : ReferencedObjectsWithOwner)
 	{
-		if (Object.Value.IsValid())
+		if (!Object.Value.IsValid())
 		{
 			ObjectsNeedGC.Emplace(Object.Key);
 		}
