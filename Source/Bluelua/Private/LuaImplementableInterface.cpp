@@ -112,7 +112,7 @@ bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr
 		return false;
 	}
 
-	if (!BindingLuaPath.Equals(BindingLuaPath))
+	if (!BindingLuaPath.Equals(InLuaFilePath))
 	{
 		// new lua file
 		OnRelease();
