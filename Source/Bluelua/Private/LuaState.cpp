@@ -85,6 +85,8 @@ FLuaState::FLuaState()
 		lua_setfield(L, -2, "__mode");
 		lua_setmetatable(L, -2);
 		CacheObjectRefIndex = luaL_ref(L, LUA_REGISTRYINDEX);
+
+		UE_LOG(LogBluelua, Display, TEXT("Lua state created. LuaState[0x%x], L[0x%x]."), this, L);
 	}
 
 	PostGarbageCollectDelegate = FCoreUObjectDelegates::GetPostGarbageCollect().AddRaw(this, &FLuaState::OnPostGarbageCollect);
@@ -105,6 +107,9 @@ FLuaState::~FLuaState()
 
 		lua_close(L);
 	}
+
+	UE_LOG(LogBluelua, Display, TEXT("Lua state closed. LuaState[0x%x], L[0x%x]."), this, L);
+	L = nullptr;
 }
 
 lua_State* FLuaState::GetState() const

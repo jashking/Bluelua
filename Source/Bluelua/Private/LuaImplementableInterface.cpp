@@ -66,24 +66,24 @@ bool ILuaImplementableInterface::FetchLuaModule()
 
 void ILuaImplementableInterface::CleanAllLuaImplementableObject(FLuaState* InLuaState/* = nullptr*/)
 {
-	TArray<TSet<ILuaImplementableInterface*>*> PendingCleanObjects;
+	TArray<ILuaImplementableInterface*> PendingCleanObjects;
 	for (auto& Iter : LuaImplementableObjects)
 	{
 		if (!InLuaState || Iter.Key == InLuaState)
 		{
-			PendingCleanObjects.Emplace(&(Iter.Value));
+			for (auto& Interface : Iter.Value)
+			{
+				PendingCleanObjects.Emplace(Interface);
+			}
 		}
 	}
 
 	for (auto& Iter : PendingCleanObjects)
 	{
-		for (auto& Interface : *Iter)
+		UObject* Object = Cast<UObject>(Iter);
+		if (Object && Object->IsValidLowLevel())
 		{
-			UObject* Object = Cast<UObject>(Interface);
-			if (Object && Object->IsValidLowLevel())
-			{
-				Interface->OnRelease();
-			}
+			Iter->OnRelease();
 		}
 	}
 
@@ -158,6 +158,8 @@ bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr
 
 void ILuaImplementableInterface::OnRelease()
 {
+	RemoveFromLuaObjectList(LuaState.Get(), this);
+
 	if (LuaState.IsValid() && ModuleReferanceIndex != LUA_NOREF)
 	{
 		luaL_unref(LuaState->GetState(), LUA_REGISTRYINDEX, ModuleReferanceIndex);
@@ -206,4 +208,15 @@ void ILuaImplementableInterface::AddToLuaObjectList(FLuaState* InLuaState, ILuaI
 	}
 
 	LuaImplementableObjects.FindOrAdd(InLuaState).Emplace(Object);
+}
+
+void ILuaImplementableInterface::RemoveFromLuaObjectList(FLuaState* InLuaState, ILuaImplementableInterface* Object)
+{
+	TSet<ILuaImplementableInterface*>* ValuePtr = LuaImplementableObjects.Find(InLuaState);
+	if (!ValuePtr)
+	{
+		return;
+	}
+
+	(*ValuePtr).Remove(Object);
 }

@@ -4,6 +4,7 @@
 #include "UObject/UnrealType.h"
 #include "UObject/UObjectGlobals.h"
 
+#include "Bluelua.h"
 #include "lua.hpp"
 #include "LuaObjectBase.h"
 #include "LuaState.h"
@@ -13,9 +14,14 @@ const TCHAR* ULuaDelegateCaller::DelegateFunctionName = TEXT("NeverUsed");
 
 void ULuaDelegateCaller::ProcessEvent(UFunction* Function, void* Parameters)
 {
-	if (!LuaState.IsValid() || LuaFunctionIndex == LUA_NOREF
-		|| !Function || !Function->GetName().Equals(DelegateFunctionName))
+	if (LuaFunctionIndex == LUA_NOREF || !Function || !Function->GetName().Equals(DelegateFunctionName))
 	{
+		return;
+	}
+
+	if (!LuaState.IsValid())
+	{
+		UE_LOG(LogBluelua, Warning, TEXT("Call lua delegate failed! Lua state is not valid! SignatureFunction[%s]"), SignatureFunction ? *SignatureFunction->GetName() : TEXT("void"));
 		return;
 	}
 

@@ -34,6 +34,7 @@ protected:
 	virtual bool OnProcessEvent(UFunction* Function, void* Parameters);
 
 	static void AddToLuaObjectList(FLuaState* InLuaState, ILuaImplementableInterface* Object);
+	static void RemoveFromLuaObjectList(FLuaState* InLuaState, ILuaImplementableInterface* Object);
 
 protected:
 	TSharedPtr<FLuaState> LuaState;
