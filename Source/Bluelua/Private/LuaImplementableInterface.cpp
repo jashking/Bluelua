@@ -160,14 +160,19 @@ void ILuaImplementableInterface::OnRelease()
 {
 	RemoveFromLuaObjectList(LuaState.Get(), this);
 
-	if (LuaState.IsValid() && ModuleReferanceIndex != LUA_NOREF)
+	if (LuaState.IsValid())
 	{
-		luaL_unref(LuaState->GetState(), LUA_REGISTRYINDEX, ModuleReferanceIndex);
+		LuaState->RemoveReferenceByOwner(Cast<UObject>(this));
+
+		if (ModuleReferanceIndex != LUA_NOREF)
+		{
+			luaL_unref(LuaState->GetState(), LUA_REGISTRYINDEX, ModuleReferanceIndex);
+		}
 	}
 
 	ModuleReferanceIndex = LUA_NOREF;
-
 	LuaState.Reset();
+	BindingLuaPath = TEXT("");
 }
 
 bool ILuaImplementableInterface::OnProcessEvent(UFunction* Function, void* Parameters)

@@ -26,6 +26,7 @@ public:
 	void AddReference(UObject* Object, UObject* Owner);
 	void RemoveReference(UObject* Object);
 	void RemoveReference(UObject* Object, UObject* Owner);
+	void RemoveReferenceByOwner(UObject* Owner);
 	void GetObjectsByOwner(UObject* Owner, TSet<UObject*>& Objects);
 
 	// Begin FGCObject interface

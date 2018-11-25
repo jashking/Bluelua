@@ -282,14 +282,32 @@ void FLuaState::RemoveReference(UObject* Object)
 
 void FLuaState::RemoveReference(UObject* Object, UObject* Owner)
 {
+	ULuaDelegateCaller* Delegate = Cast<ULuaDelegateCaller>(Object);
+	if (Delegate)
+	{
+		Delegate->ReleaseLuaFunction();
+	}
+
 	ReferencedObjectsWithOwner.Remove(Object);
+}
+
+void FLuaState::RemoveReferenceByOwner(UObject* Owner)
+{
+	TSet<UObject*> SubObjects;
+
+	GetObjectsByOwner(Owner, SubObjects);
+
+	for (auto& Object : SubObjects)
+	{
+		RemoveReference(Object, Owner);
+	}
 }
 
 void FLuaState::GetObjectsByOwner(UObject* Owner, TSet<UObject*>& Objects)
 {
-	for (auto Object : ReferencedObjectsWithOwner)
+	for (auto& Object : ReferencedObjectsWithOwner)
 	{
-		if (Object.Value.IsValid() && Object.Value.Get() == Owner && Object.Key->IsValidLowLevel())
+		if (Object.Value.IsValid() && Object.Value.Get() == Owner)
 		{
 			Objects.Emplace(Object.Key);
 		}
@@ -537,7 +555,7 @@ void FLuaState::OnPostGarbageCollect()
 {
 	TSet<UObject*> ObjectsNeedGC;
 
-	for (auto Object : ReferencedObjectsWithOwner)
+	for (auto& Object : ReferencedObjectsWithOwner)
 	{
 		if (!Object.Value.IsValid())
 		{
@@ -545,8 +563,8 @@ void FLuaState::OnPostGarbageCollect()
 		}
 	}
 
-	for (auto Object : ObjectsNeedGC)
+	for (auto& Object : ObjectsNeedGC)
 	{
-		ReferencedObjectsWithOwner.Remove(Object);
+		RemoveReference(Object, nullptr);
 	}
 }

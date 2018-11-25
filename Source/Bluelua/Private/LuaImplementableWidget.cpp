@@ -44,6 +44,13 @@ void ULuaImplementableWidget::NativeTick(const FGeometry& MyGeometry, float InDe
 	}
 }
 
+void ULuaImplementableWidget::BeginDestroy()
+{
+	Super::BeginDestroy();
+
+	OnRelease();
+}
+
 void ULuaImplementableWidget::TickActions(float InDeltaTime)
 {
 	if (LuaState.IsValid())

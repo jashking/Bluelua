@@ -5,6 +5,7 @@
 #include "UObject/StructOnScope.h"
 #include "UObject/UnrealType.h"
 
+#include "Bluelua.h"
 #include "lua.hpp"
 #include "LuaState.h"
 #include "LuaImplementableInterface.h"
@@ -129,6 +130,7 @@ int FLuaUObject::Index(lua_State* L)
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
 	if (!LuaUObject->Source.IsValid())
 	{
+		UE_LOG(LogBluelua, Warning, TEXT("Try to index a property[%s] on a invalid object!"), UTF8_TO_TCHAR(lua_tostring(L, 2)));
 		return 0;
 	}
 

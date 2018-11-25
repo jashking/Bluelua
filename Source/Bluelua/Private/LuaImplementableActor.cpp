@@ -33,6 +33,13 @@ void ALuaImplementableActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	OnRelease();
 }
 
+void ALuaImplementableActor::BeginDestroy()
+{
+	Super::BeginDestroy();
+
+	OnRelease();
+}
+
 void ALuaImplementableActor::ProcessEvent(UFunction* Function, void* Parameters)
 {
 	if (!OnProcessEvent(Function, Parameters))
