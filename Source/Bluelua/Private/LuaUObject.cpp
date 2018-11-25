@@ -35,7 +35,15 @@ int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bRef/* = false*/)
 	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
 	if (LuaStateWrapper && LuaStateWrapper->GetFromCache(InSource))
 	{
-		return 1;
+		FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, -1, UOBJECT_METATABLE);
+		if (LuaUObject && LuaUObject->Source.IsValid())
+		{
+			return 1;
+		}
+		else
+		{
+			lua_pop(L, 1);
+		}
 	}
 
 	void* Buffer = lua_newuserdata(L, sizeof(FLuaUObject));
