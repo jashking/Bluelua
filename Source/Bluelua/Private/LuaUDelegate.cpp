@@ -5,10 +5,13 @@
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 
+#include "Bluelua.h"
 #include "lua.hpp"
 #include "LuaDelegateCaller.h"
 #include "LuaState.h"
 #include "LuaUObject.h"
+
+DECLARE_CYCLE_STAT(TEXT("DelegatePush"), STAT_DelegatePush, STATGROUP_Bluelua);
 
 const char* FLuaUDelegate::UDELEGATE_METATABLE = "UDelegate_Metatable";
 
@@ -28,6 +31,8 @@ FLuaUDelegate::~FLuaUDelegate()
 
 int FLuaUDelegate::Push(lua_State* L, UObject* Owner, void* InSource, UFunction* InFunction, bool InbIsMulticast, void* InBuffer /*= nullptr*/)
 {
+	SCOPE_CYCLE_COUNTER(STAT_DelegatePush);
+
 	if (!InSource || !InFunction || !Owner || !Owner->IsValidLowLevel())
 	{
 		lua_pushnil(L);

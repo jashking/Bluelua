@@ -19,6 +19,11 @@
 #include "LuaUScriptStruct.h"
 
 DECLARE_DWORD_ACCUMULATOR_STAT(TEXT("LuaMemory"), STAT_LuaMemory, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("CallLuaFunction"), STAT_CallLuaFunction, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("FillOutProperty"), STAT_FillOutProperty, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("LuaLoadClass"), STAT_LuaLoadClass, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("LuaLoadStruct"), STAT_LuaLoadStruct, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("LuaGetEnum"), STAT_LuaGetEnum, STATGROUP_Bluelua);
 
 FLuaState::FLuaState()
 	: L(nullptr)
@@ -178,6 +183,8 @@ bool FLuaState::DoFile(const FString& FilePath)
 
 bool FLuaState::CallLuaFunction(UFunction* SignatureFunction, void* Parameters, bool bWithSelf/* = true*/)
 {
+	SCOPE_CYCLE_COUNTER(STAT_CallLuaFunction);
+
 	FLuaStackGuard Gurad(L);
 	
 	lua_pushcfunction(L, FLuaState::LuaError);
@@ -441,6 +448,8 @@ void* FLuaState::LuaAlloc(void* UserData, void* Ptr, size_t OldSize, size_t NewS
 
 int FLuaState::LuaLoadClass(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_LuaLoadClass);
+
 	const char* ClassName = lua_tostring(L, 1);
 	if (ClassName)
 	{
@@ -470,6 +479,8 @@ int FLuaState::LuaLoadClass(lua_State* L)
 
 int FLuaState::LuaLoadStruct(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_LuaLoadStruct);
+
 	const char* StructName = lua_tostring(L, 1);
 	if (StructName)
 	{
@@ -492,6 +503,8 @@ int FLuaState::LuaLoadStruct(lua_State* L)
 
 int FLuaState::GetEnumValue(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_LuaGetEnum);
+
 	const char* StackEnumTypeValueName = lua_tostring(L, 1);
 	if (!StackEnumTypeValueName)
 	{
@@ -525,6 +538,8 @@ int FLuaState::GetEnumValue(lua_State* L)
 
 int FLuaState::FillOutProperty(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_FillOutProperty);
+
 	int32 OutParamsCount = lua_tointeger(L, lua_upvalueindex(1));
 	UProperty* ReturnValue = (UProperty*)lua_touserdata(L, lua_upvalueindex(2 + OutParamsCount));
 	UFunction* Function = (UFunction*)lua_touserdata(L, lua_upvalueindex(3 + OutParamsCount));

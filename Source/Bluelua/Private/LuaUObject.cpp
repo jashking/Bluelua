@@ -10,6 +10,11 @@
 #include "LuaState.h"
 #include "LuaImplementableInterface.h"
 
+DECLARE_CYCLE_STAT(TEXT("ObjectPush"), STAT_ObjectPush, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ObjectIndex"), STAT_ObjectIndex, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ObjectNewIndex"), STAT_ObjectNewIndex, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ObjectCallUFunction"), STAT_ObjectCallUFunction, STATGROUP_Bluelua);
+
 const char* FLuaUObject::UOBJECT_METATABLE = "UObject_Metatable";
 
 FLuaUObject::FLuaUObject(UObject* InSource, bool InbRef)
@@ -26,6 +31,8 @@ FLuaUObject::~FLuaUObject()
 
 int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bRef/* = false*/)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ObjectPush);
+
 	if (!InSource)
 	{
 		lua_pushnil(L);
@@ -135,6 +142,8 @@ int FLuaUObject::LuaUnLoadObject(lua_State* L)
 
 int FLuaUObject::Index(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ObjectIndex);
+
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
 	if (!LuaUObject->Source.IsValid())
 	{
@@ -172,6 +181,8 @@ int FLuaUObject::Index(lua_State* L)
 
 int FLuaUObject::NewIndex(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ObjectNewIndex);
+
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
 	if (!LuaUObject->Source.IsValid())
 	{
@@ -209,6 +220,8 @@ int FLuaUObject::ToString(lua_State* L)
 
 int FLuaUObject::CallUFunction(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ObjectCallUFunction);
+
 	UFunction* Function = (UFunction*)lua_touserdata(L, lua_upvalueindex(1));
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
 	if (!LuaUObject->Source.IsValid())

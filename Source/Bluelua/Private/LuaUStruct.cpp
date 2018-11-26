@@ -4,7 +4,12 @@
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 
+#include "Bluelua.h"
 #include "lua.hpp"
+
+DECLARE_CYCLE_STAT(TEXT("StructPush"), STAT_StructPush, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("StructIndex"), STAT_StructIndex, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("StructNewIndex"), STAT_StructNewIndex, STATGROUP_Bluelua);
 
 const char* FLuaUStruct::USTRUCT_METATABLE = "UStruct_Metatable";
 
@@ -27,6 +32,8 @@ int32 FLuaUStruct::GetStructureSize() const
 
 int FLuaUStruct::Push(lua_State* L, UScriptStruct* InSource, void* InBuffer /*= nullptr*/)
 {
+	SCOPE_CYCLE_COUNTER(STAT_StructPush);
+
 	if (!InSource)
 	{
 		lua_pushnil(L);
@@ -91,6 +98,8 @@ bool FLuaUStruct::Fetch(lua_State* L, int32 Index, UScriptStruct* OutStruct, uin
 
 int FLuaUStruct::Index(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_StructIndex);
+
 	FLuaUStruct* LuaUStruct = (FLuaUStruct*)luaL_checkudata(L, 1, USTRUCT_METATABLE);
 	if (!LuaUStruct->Source)
 	{
@@ -108,6 +117,8 @@ int FLuaUStruct::Index(lua_State* L)
 
 int FLuaUStruct::NewIndex(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_StructNewIndex);
+
 	FLuaUStruct* LuaUStruct = (FLuaUStruct*)luaL_checkudata(L, 1, USTRUCT_METATABLE);
 	if (!LuaUStruct->Source)
 	{

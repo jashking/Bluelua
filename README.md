@@ -18,7 +18,6 @@
 
 ## TODO ##
 
-* statistics
 * hot reload lua
 * call BlueprintNativeEvent default implemention
 * call lua function in blueprint

@@ -4,10 +4,17 @@
 #include "UObject/StructOnScope.h"
 #include "UObject/UnrealType.h"
 
+#include "Bluelua.h"
 #include "lua.hpp"
 #include "LuaObjectBase.h"
 #include "LuaState.h"
 #include "LuaUObject.h"
+
+DECLARE_CYCLE_STAT(TEXT("ClassPush"), STAT_ClassPush, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ClassConstruct"), STAT_ClassConstruct, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ClassIndex"), STAT_ClassIndex, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ClassNewIndex"), STAT_ClassNewIndex, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ClassCallStaticUFunction"), STAT_ClassCallStaticUFunction, STATGROUP_Bluelua);
 
 const char* FLuaUClass::UCLASS_METATABLE = "UClass_Metatable";
 
@@ -24,6 +31,8 @@ FLuaUClass::~FLuaUClass()
 
 int FLuaUClass::Push(lua_State* L, UClass* InSource)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ClassPush);
+
 	if (!InSource)
 	{
 		lua_pushnil(L);
@@ -77,6 +86,8 @@ UClass* FLuaUClass::Fetch(lua_State* L, int32 Index)
 
 int FLuaUClass::Construct(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ClassConstruct);
+
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
 	if (!LuaUClass->Source)
 	{
@@ -102,6 +113,8 @@ int FLuaUClass::Construct(lua_State* L)
 
 int FLuaUClass::Index(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ClassIndex);
+
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
 	if (!LuaUClass->Source)
 	{
@@ -131,6 +144,8 @@ int FLuaUClass::Index(lua_State* L)
 
 int FLuaUClass::NewIndex(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ClassNewIndex);
+
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
 	if (!LuaUClass->Source)
 	{
@@ -169,6 +184,8 @@ int FLuaUClass::ToString(lua_State* L)
 
 int FLuaUClass::CallStaticUFunction(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ClassCallStaticUFunction);
+
 	UFunction* Function = (UFunction*)lua_touserdata(L, lua_upvalueindex(1));
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
 	if (!LuaUClass->Source)

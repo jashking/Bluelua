@@ -11,6 +11,11 @@
 #include "LuaStackGuard.h"
 #include "LuaUObject.h"
 
+DECLARE_CYCLE_STAT(TEXT("InitLuaObject"), STAT_InitLuaObject, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ReleaseLuaObject"), STAT_ReleaseLuaObject, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("CleanAllLuaObject"), STAT_CleanAllLuaObject, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ProcessLuaObjectOverrideEvent"), STAT_ProcessLuaObjectOverrideEvent, STATGROUP_Bluelua);
+
 struct FLuaAutoCleanGlobal
 {
 public:
@@ -66,6 +71,8 @@ bool ILuaImplementableInterface::FetchLuaModule()
 
 void ILuaImplementableInterface::CleanAllLuaImplementableObject(FLuaState* InLuaState/* = nullptr*/)
 {
+	SCOPE_CYCLE_COUNTER(STAT_CleanAllLuaObject);
+
 	TArray<ILuaImplementableInterface*> PendingCleanObjects;
 	for (auto& Iter : LuaImplementableObjects)
 	{
@@ -107,6 +114,8 @@ void ILuaImplementableInterface::PreRegisterLua(const FString& InLuaFilePath)
 
 bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr<FLuaState> InLuaState/* = nullptr*/)
 {
+	SCOPE_CYCLE_COUNTER(STAT_InitLuaObject);
+
 	if (InLuaFilePath.IsEmpty())
 	{
 		return false;
@@ -158,6 +167,8 @@ bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr
 
 void ILuaImplementableInterface::OnRelease()
 {
+	SCOPE_CYCLE_COUNTER(STAT_ReleaseLuaObject);
+
 	RemoveFromLuaObjectList(LuaState.Get(), this);
 
 	if (LuaState.IsValid())
@@ -182,6 +193,8 @@ bool ILuaImplementableInterface::OnProcessEvent(UFunction* Function, void* Param
 	{
 		return false;
 	}
+
+	SCOPE_CYCLE_COUNTER(STAT_ProcessLuaObjectOverrideEvent);
 
 	lua_State* L = LuaState->GetState();
 	FLuaStackGuard Gurad(L);

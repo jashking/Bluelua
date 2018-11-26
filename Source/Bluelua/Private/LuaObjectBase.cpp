@@ -13,6 +13,9 @@
 #include "LuaUObject.h"
 #include "LuaUStruct.h"
 
+DECLARE_CYCLE_STAT(TEXT("PushPropertyToLua"), STAT_PushPropertyToLua, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("FetchPropertyFromLua"), STAT_FetchPropertyFromLua, STATGROUP_Bluelua);
+
 static TMap<UClass*, FLuaObjectBase::PushPropertyFunction> GPusherMap;
 static TMap<UClass*, FLuaObjectBase::FetchPropertyFunction> GFetcherMap;
 
@@ -128,6 +131,8 @@ FLuaObjectBase::FetchPropertyFunction FLuaObjectBase::GetFetcher(UClass* Class)
 
 int FLuaObjectBase::PushProperty(lua_State* L, UProperty* Property, void* Params)
 {
+	SCOPE_CYCLE_COUNTER(STAT_PushPropertyToLua);
+
 	auto Pusher = GetPusher(Property->GetClass());
 	if (Pusher)
 	{
@@ -335,6 +340,8 @@ int FLuaObjectBase::Push(lua_State* L, const FName& Value)
 
 bool FLuaObjectBase::FetchProperty(lua_State* L, UProperty* Property, void* Params, int32 Index)
 {
+	SCOPE_CYCLE_COUNTER(STAT_FetchPropertyFromLua);
+
 	auto Fetcher = GetFetcher(Property->GetClass());
 	if (Fetcher)
 	{

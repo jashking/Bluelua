@@ -3,9 +3,13 @@
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 
+#include "Bluelua.h"
 #include "lua.hpp"
 #include "LuaState.h"
 #include "LuaUStruct.h"
+
+DECLARE_CYCLE_STAT(TEXT("ScriptStructPush"), STAT_ScriptStructPush, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ScriptStructConstruct"), STAT_ScriptStructConstruct, STATGROUP_Bluelua);
 
 const char* FLuaUScriptStruct::USCRIPTSTRUCT_METATABLE = "UScriptStruct_Metatable";
 
@@ -22,6 +26,8 @@ FLuaUScriptStruct::~FLuaUScriptStruct()
 
 int FLuaUScriptStruct::Push(lua_State* L, UScriptStruct* InSource)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ScriptStructPush);
+
 	if (!InSource)
 	{
 		lua_pushnil(L);
@@ -61,6 +67,8 @@ int FLuaUScriptStruct::Push(lua_State* L, UScriptStruct* InSource)
 
 int FLuaUScriptStruct::Construct(lua_State* L)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ScriptStructConstruct);
+
 	FLuaUScriptStruct* LuaUScriptStruct = (FLuaUScriptStruct*)luaL_checkudata(L, 1, USCRIPTSTRUCT_METATABLE);
 	if (!LuaUScriptStruct->Source)
 	{

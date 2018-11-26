@@ -10,6 +10,8 @@
 #include "LuaState.h"
 #include "LuaStackGuard.h"
 
+DECLARE_CYCLE_STAT(TEXT("HandleLuaDelegate"), STAT_HandleLuaDelegate, STATGROUP_Bluelua);
+
 const TCHAR* ULuaDelegateCaller::DelegateFunctionName = TEXT("NeverUsed");
 
 void ULuaDelegateCaller::ProcessEvent(UFunction* Function, void* Parameters)
@@ -24,6 +26,8 @@ void ULuaDelegateCaller::ProcessEvent(UFunction* Function, void* Parameters)
 		UE_LOG(LogBluelua, Warning, TEXT("Call lua delegate failed! Lua state is not valid! SignatureFunction[%s]"), SignatureFunction ? *SignatureFunction->GetName() : TEXT("void"));
 		return;
 	}
+
+	SCOPE_CYCLE_COUNTER(STAT_HandleLuaDelegate);
 
 	lua_State* L = LuaState.Pin()->GetState();
 	FLuaStackGuard Gurad(L);
