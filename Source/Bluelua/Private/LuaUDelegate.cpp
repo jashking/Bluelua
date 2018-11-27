@@ -96,6 +96,7 @@ int FLuaUDelegate::CreateDelegate(lua_State* L)
 	UObject* DelegateOwner = FLuaUObject::Fetch(L, 1);
 	if (!DelegateOwner)
 	{
+		luaL_error(L, "Create delegate failed! Param 1 must be a UObject!");
 		return 0;
 	}
 
