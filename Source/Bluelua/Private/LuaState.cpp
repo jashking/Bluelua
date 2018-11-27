@@ -272,19 +272,9 @@ bool FLuaState::AddToCache(void* InObject)
 	return true;
 }
 
-void FLuaState::AddReference(UObject* Object)
-{
-	ReferencedObjects.Emplace(Object);
-}
-
 void FLuaState::AddReference(UObject* Object, UObject* Owner)
 {
 	ReferencedObjectsWithOwner.FindOrAdd(Object) = Owner;
-}
-
-void FLuaState::RemoveReference(UObject* Object)
-{
-	ReferencedObjects.Remove(Object);
 }
 
 void FLuaState::RemoveReference(UObject* Object, UObject* Owner)
@@ -323,7 +313,6 @@ void FLuaState::GetObjectsByOwner(UObject* Owner, TSet<UObject*>& Objects)
 
 void FLuaState::AddReferencedObjects(FReferenceCollector& Collector)
 {
-	Collector.AddReferencedObjects(ReferencedObjects);
 	Collector.AddReferencedObjects(ReferencedObjectsWithOwner);
 }
 

@@ -22,9 +22,7 @@ public:
 	bool GetFromCache(void* InObject);
 	bool AddToCache(void* InObject);
 
-	void AddReference(UObject* Object);
 	void AddReference(UObject* Object, UObject* Owner);
-	void RemoveReference(UObject* Object);
 	void RemoveReference(UObject* Object, UObject* Owner);
 	void RemoveReferenceByOwner(UObject* Owner);
 	void GetObjectsByOwner(UObject* Owner, TSet<UObject*>& Objects);
@@ -56,7 +54,6 @@ protected:
 
 	int CacheObjectRefIndex;
 
-	TSet<UObject*> ReferencedObjects;
 	TMap<UObject*, TWeakObjectPtr<UObject>> ReferencedObjectsWithOwner;
 
 	FDelegateHandle PostGarbageCollectDelegate;

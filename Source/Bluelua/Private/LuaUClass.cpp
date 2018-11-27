@@ -94,10 +94,10 @@ int FLuaUClass::Construct(lua_State* L)
 		return 0;
 	}
 
-	UObject* Outer = (UObject*)GetTransientPackage();
-	if (lua_isuserdata(L, 2))
+	UObject* Owner = FLuaUObject::Fetch(L, 2);
+	if (!Owner)
 	{
-		Outer = FLuaUObject::Fetch(L, 2);
+		return 0;
 	}
 
 	FName ObjectName;
@@ -106,9 +106,9 @@ int FLuaUClass::Construct(lua_State* L)
 		FLuaObjectBase::Fetch(L, 3, ObjectName);
 	}
 
-	UObject* Object = NewObject<UObject>(Outer, LuaUClass->Source, ObjectName);
+	UObject* Object = NewObject<UObject>(Owner, LuaUClass->Source, ObjectName);
 
-	return FLuaUObject::Push(L, Object, true);
+	return FLuaUObject::Push(L, Object, Owner);
 }
 
 int FLuaUClass::Index(lua_State* L)

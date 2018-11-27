@@ -17,9 +17,9 @@ DECLARE_CYCLE_STAT(TEXT("ObjectCallUFunction"), STAT_ObjectCallUFunction, STATGR
 
 const char* FLuaUObject::UOBJECT_METATABLE = "UObject_Metatable";
 
-FLuaUObject::FLuaUObject(UObject* InSource, bool InbRef)
+FLuaUObject::FLuaUObject(UObject* InSource, UObject* InParent)
 	: Source(InSource)
-	, bRef(bRef)
+	, Parent(InParent)
 {
 
 }
@@ -29,7 +29,7 @@ FLuaUObject::~FLuaUObject()
 
 }
 
-int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bRef/* = false*/)
+int FLuaUObject::Push(lua_State* L, UObject* InSource, UObject* InParent/* = nullptr*/)
 {
 	SCOPE_CYCLE_COUNTER(STAT_ObjectPush);
 
@@ -54,7 +54,7 @@ int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bRef/* = false*/)
 	}
 
 	void* Buffer = lua_newuserdata(L, sizeof(FLuaUObject));
-	FLuaUObject* LuaUObject = new(Buffer) FLuaUObject(InSource, bRef);
+	FLuaUObject* LuaUObject = new(Buffer) FLuaUObject(InSource, InParent);
 
 	if (luaL_newmetatable(L, UOBJECT_METATABLE))
 	{
@@ -76,9 +76,9 @@ int FLuaUObject::Push(lua_State* L, UObject* InSource, bool bRef/* = false*/)
 	{
 		LuaStateWrapper->AddToCache(InSource);
 
-		if (bRef)
+		if (InParent)
 		{
-			LuaStateWrapper->AddReference(InSource);
+			LuaStateWrapper->AddReference(InSource, InParent);
 		}
 	}
 
@@ -111,16 +111,9 @@ int FLuaUObject::LuaLoadObject(lua_State* L)
 		return 0;
 	}
 
-	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
-	if (!LuaStateWrapper)
-	{
-		return 0;
-	}
-
 	UObject* Object = LoadObject<UObject>(Owner, UTF8_TO_TCHAR(ObjectPath));
-	LuaStateWrapper->AddReference(Object, Owner);
 
-	return FLuaUObject::Push(L, Object, false);
+	return FLuaUObject::Push(L, Object, Owner);
 }
 
 int FLuaUObject::LuaUnLoadObject(lua_State* L)
@@ -237,9 +230,9 @@ int FLuaUObject::GC(lua_State* L)
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
 
 	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
-	if (LuaStateWrapper && LuaUObject && LuaUObject->bRef)
+	if (LuaStateWrapper && LuaUObject && LuaUObject->Parent)
 	{
-		LuaStateWrapper->RemoveReference(LuaUObject->Source.Get());
+		LuaStateWrapper->RemoveReference(LuaUObject->Source.Get(), LuaUObject->Parent);
 	}
 
 	LuaUObject->Source.Reset();
