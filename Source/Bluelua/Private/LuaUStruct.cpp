@@ -13,9 +13,10 @@ DECLARE_CYCLE_STAT(TEXT("StructNewIndex"), STAT_StructNewIndex, STATGROUP_Bluelu
 
 const char* FLuaUStruct::USTRUCT_METATABLE = "UStruct_Metatable";
 
-FLuaUStruct::FLuaUStruct(UScriptStruct* InSource, uint8* InScriptBuffer)
+FLuaUStruct::FLuaUStruct(UScriptStruct* InSource, uint8* InScriptBuffer, bool InbCopyValue)
 	: Source(InSource)
 	, ScriptBuffer(InScriptBuffer)
+	, bCopyValue(InbCopyValue)
 {
 
 }
@@ -30,7 +31,7 @@ int32 FLuaUStruct::GetStructureSize() const
 	return Source ? Source->GetStructureSize() : 0;
 }
 
-int FLuaUStruct::Push(lua_State* L, UScriptStruct* InSource, void* InBuffer /*= nullptr*/)
+int FLuaUStruct::Push(lua_State* L, UScriptStruct* InSource, void* InBuffer /*= nullptr*/, bool InbCopyValue/* = true*/)
 {
 	SCOPE_CYCLE_COUNTER(STAT_StructPush);
 
@@ -41,14 +42,20 @@ int FLuaUStruct::Push(lua_State* L, UScriptStruct* InSource, void* InBuffer /*= 
 	}
 
 	uint8* UserData = (uint8*)lua_newuserdata(L, sizeof(FLuaUStruct));
-	uint8* ScriptBuffer = (uint8*)FMemory::Malloc(InSource->GetStructureSize());
 
-	FLuaUStruct* LuaUStruct = new(UserData) FLuaUStruct(InSource, ScriptBuffer);
-	InSource->InitializeStruct(ScriptBuffer);
-	if (InBuffer)
+	uint8* ScriptBuffer = (uint8*)InBuffer;
+	if (InbCopyValue)
 	{
-		InSource->CopyScriptStruct(ScriptBuffer, InBuffer);
+		ScriptBuffer = (uint8*)FMemory::Malloc(InSource->GetStructureSize());
+		InSource->InitializeStruct(ScriptBuffer);
+
+		if (InBuffer)
+		{
+			InSource->CopyScriptStruct(ScriptBuffer, InBuffer);
+		}
 	}
+
+	FLuaUStruct* LuaUStruct = new(UserData) FLuaUStruct(InSource, ScriptBuffer, InbCopyValue);
 
 	if (luaL_newmetatable(L, USTRUCT_METATABLE))
 	{
@@ -109,7 +116,7 @@ int FLuaUStruct::Index(lua_State* L)
 	const char* PropertyName = lua_tostring(L, 2);
 	if (UProperty* Property = FindStructPropertyByName(LuaUStruct->Source, PropertyName))
 	{
-		return FLuaObjectBase::PushProperty(L, Property, LuaUStruct->ScriptBuffer);
+		return FLuaObjectBase::PushProperty(L, Property, LuaUStruct->ScriptBuffer, false);
 	}
 
 	return 0;
@@ -148,15 +155,18 @@ int FLuaUStruct::GC(lua_State* L)
 {
 	FLuaUStruct* LuaUStruct = (FLuaUStruct*)luaL_checkudata(L, 1, USTRUCT_METATABLE);
 
-	if (LuaUStruct->Source && LuaUStruct->ScriptBuffer)
+	if (LuaUStruct->bCopyValue)
 	{
-		LuaUStruct->Source->DestroyStruct(LuaUStruct->ScriptBuffer);
-	}
+		if (LuaUStruct->Source && LuaUStruct->ScriptBuffer)
+		{
+			LuaUStruct->Source->DestroyStruct(LuaUStruct->ScriptBuffer);
+		}
 
-	if (LuaUStruct->ScriptBuffer)
-	{
-		FMemory::Free(LuaUStruct->ScriptBuffer);
-		LuaUStruct->ScriptBuffer = nullptr;
+		if (LuaUStruct->ScriptBuffer)
+		{
+			FMemory::Free(LuaUStruct->ScriptBuffer);
+			LuaUStruct->ScriptBuffer = nullptr;
+		}
 	}
 
 	return 0;

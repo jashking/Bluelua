@@ -7,12 +7,12 @@
 class BLUELUA_API FLuaUStruct : public FLuaObjectBase
 {
 public:
-	FLuaUStruct(UScriptStruct* InSource, uint8* InScriptBuffer);
+	FLuaUStruct(UScriptStruct* InSource, uint8* InScriptBuffer, bool InbCopyValue);
 	~FLuaUStruct();
 
 	int32 GetStructureSize() const;
 
-	static int Push(lua_State* L, UScriptStruct* InSource, void* InBuffer = nullptr);
+	static int Push(lua_State* L, UScriptStruct* InSource, void* InBuffer = nullptr, bool InbCopyValue = true);
 	static bool Fetch(lua_State* L, int32 Index, UScriptStruct* OutStruct, uint8* OutBuffer);
 
 protected:
@@ -26,6 +26,7 @@ protected:
 protected:
 	UScriptStruct* Source;
 	uint8* ScriptBuffer;
+	bool bCopyValue;
 
 	static const char* USTRUCT_METATABLE;
 };
