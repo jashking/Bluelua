@@ -70,19 +70,19 @@ int FLuaUScriptStruct::Construct(lua_State* L)
 	SCOPE_CYCLE_COUNTER(STAT_ScriptStructConstruct);
 
 	FLuaUScriptStruct* LuaUScriptStruct = (FLuaUScriptStruct*)luaL_checkudata(L, 1, USCRIPTSTRUCT_METATABLE);
-	if (!LuaUScriptStruct->Source)
+	if (!LuaUScriptStruct->Source.IsValid())
 	{
 		return 0;
 	}
 
-	return FLuaUStruct::Push(L, LuaUScriptStruct->Source);
+	return FLuaUStruct::Push(L, LuaUScriptStruct->Source.Get());
 }
 
 int FLuaUScriptStruct::ToString(lua_State* L)
 {
 	FLuaUScriptStruct* LuaUScriptStruct = (FLuaUScriptStruct*)luaL_checkudata(L, 1, USCRIPTSTRUCT_METATABLE);
 
-	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UScriptStruct[%s]"), LuaUScriptStruct->Source ? *(LuaUScriptStruct->Source->GetName()) : TEXT("null"))));
+	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UScriptStruct[%s]"), LuaUScriptStruct->Source.IsValid() ? *(LuaUScriptStruct->Source->GetName()) : TEXT("null"))));
 
 	return 1;
 }

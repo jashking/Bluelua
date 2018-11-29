@@ -24,7 +24,7 @@ protected:
 	static class UProperty* FindStructPropertyByName(UScriptStruct* Source, FName Name);
 
 protected:
-	UScriptStruct* Source;
+	TWeakObjectPtr<UScriptStruct> Source;
 	uint8* ScriptBuffer;
 	bool bCopyValue;
 

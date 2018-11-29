@@ -17,7 +17,7 @@ protected:
 	static int ToString(lua_State* L);
 
 protected:
-	UScriptStruct* Source;
+	TWeakObjectPtr<UScriptStruct> Source;
 	
 	static const char* USCRIPTSTRUCT_METATABLE;
 };

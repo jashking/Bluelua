@@ -81,7 +81,7 @@ UClass* FLuaUClass::Fetch(lua_State* L, int32 Index)
 
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, Index, UCLASS_METATABLE);
 
-	return LuaUClass->Source;
+	return LuaUClass->Source.IsValid() ? LuaUClass->Source.Get() : nullptr;
 }
 
 int FLuaUClass::Construct(lua_State* L)
@@ -89,7 +89,7 @@ int FLuaUClass::Construct(lua_State* L)
 	SCOPE_CYCLE_COUNTER(STAT_ClassConstruct);
 
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
-	if (!LuaUClass->Source)
+	if (!LuaUClass->Source.IsValid())
 	{
 		return 0;
 	}
@@ -106,7 +106,7 @@ int FLuaUClass::Construct(lua_State* L)
 		FLuaObjectBase::Fetch(L, 3, ObjectName);
 	}
 
-	UObject* Object = NewObject<UObject>(Owner, LuaUClass->Source, ObjectName);
+	UObject* Object = NewObject<UObject>(Owner, LuaUClass->Source.Get(), ObjectName);
 
 	return FLuaUObject::Push(L, Object, Owner);
 }
@@ -116,7 +116,7 @@ int FLuaUClass::Index(lua_State* L)
 	SCOPE_CYCLE_COUNTER(STAT_ClassIndex);
 
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
-	if (!LuaUClass->Source)
+	if (!LuaUClass->Source.IsValid())
 	{
 		return 0;
 	}
@@ -147,7 +147,7 @@ int FLuaUClass::NewIndex(lua_State* L)
 	SCOPE_CYCLE_COUNTER(STAT_ClassNewIndex);
 
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
-	if (!LuaUClass->Source)
+	if (!LuaUClass->Source.IsValid())
 	{
 		return 0;
 	}
@@ -177,7 +177,7 @@ int FLuaUClass::ToString(lua_State* L)
 {
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
 
-	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UClass[%s]"), LuaUClass->Source ? *(LuaUClass->Source->GetName()) : TEXT("null"))));
+	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UClass[%s]"), LuaUClass->Source.IsValid() ? *(LuaUClass->Source->GetName()) : TEXT("null"))));
 
 	return 1;
 }
@@ -188,7 +188,7 @@ int FLuaUClass::CallStaticUFunction(lua_State* L)
 
 	UFunction* Function = (UFunction*)lua_touserdata(L, lua_upvalueindex(1));
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
-	if (!LuaUClass->Source)
+	if (!LuaUClass->Source.IsValid())
 	{
 		return 0;
 	}

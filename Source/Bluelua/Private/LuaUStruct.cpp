@@ -28,7 +28,7 @@ FLuaUStruct::~FLuaUStruct()
 
 int32 FLuaUStruct::GetStructureSize() const
 {
-	return Source ? Source->GetStructureSize() : 0;
+	return Source.IsValid() ? Source->GetStructureSize() : 0;
 }
 
 int FLuaUStruct::Push(lua_State* L, UScriptStruct* InSource, void* InBuffer /*= nullptr*/, bool InbCopyValue/* = true*/)
@@ -108,13 +108,13 @@ int FLuaUStruct::Index(lua_State* L)
 	SCOPE_CYCLE_COUNTER(STAT_StructIndex);
 
 	FLuaUStruct* LuaUStruct = (FLuaUStruct*)luaL_checkudata(L, 1, USTRUCT_METATABLE);
-	if (!LuaUStruct->Source)
+	if (!LuaUStruct->Source.IsValid())
 	{
 		return 0;
 	}
 
 	const char* PropertyName = lua_tostring(L, 2);
-	if (UProperty* Property = FindStructPropertyByName(LuaUStruct->Source, PropertyName))
+	if (UProperty* Property = FindStructPropertyByName(LuaUStruct->Source.Get(), PropertyName))
 	{
 		return FLuaObjectBase::PushProperty(L, Property, LuaUStruct->ScriptBuffer, false);
 	}
@@ -127,13 +127,13 @@ int FLuaUStruct::NewIndex(lua_State* L)
 	SCOPE_CYCLE_COUNTER(STAT_StructNewIndex);
 
 	FLuaUStruct* LuaUStruct = (FLuaUStruct*)luaL_checkudata(L, 1, USTRUCT_METATABLE);
-	if (!LuaUStruct->Source)
+	if (!LuaUStruct->Source.IsValid())
 	{
 		return 0;
 	}
 
 	const char* PropertyName = lua_tostring(L, 2);
-	UProperty* Property = FindStructPropertyByName(LuaUStruct->Source, PropertyName);
+	UProperty* Property = FindStructPropertyByName(LuaUStruct->Source.Get(), PropertyName);
 	if (Property)
 	{
 		if (Property->PropertyFlags & CPF_BlueprintReadOnly)
@@ -157,7 +157,7 @@ int FLuaUStruct::GC(lua_State* L)
 
 	if (LuaUStruct->bCopyValue)
 	{
-		if (LuaUStruct->Source && LuaUStruct->ScriptBuffer)
+		if (LuaUStruct->Source.IsValid() && LuaUStruct->ScriptBuffer)
 		{
 			LuaUStruct->Source->DestroyStruct(LuaUStruct->ScriptBuffer);
 		}
@@ -176,7 +176,7 @@ int FLuaUStruct::ToString(lua_State* L)
 {
 	FLuaUStruct* LuaUStruct = (FLuaUStruct*)luaL_checkudata(L, 1, USTRUCT_METATABLE);
 
-	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UStruct[%s]"), LuaUStruct->Source ? *(LuaUStruct->Source->GetName()) : TEXT("null"))));
+	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UStruct[%s]"), LuaUStruct->Source.IsValid() ? *(LuaUStruct->Source->GetName()) : TEXT("null"))));
 
 	return 1;
 }

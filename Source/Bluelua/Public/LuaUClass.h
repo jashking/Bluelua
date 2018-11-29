@@ -21,7 +21,7 @@ protected:
 	static int CallStaticUFunction(lua_State* L);
 
 protected:
-	UClass* Source;
+	TWeakObjectPtr<UClass> Source;
 
 	static const char* UCLASS_METATABLE;
 };
