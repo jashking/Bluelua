@@ -40,6 +40,11 @@ public class BlueluaEditor : ModuleRules
 				"UnrealEd",
 				// ... add private dependencies that you statically link with here ...	
 				"Bluelua",
+				"BlueprintGraph",
+				"SlateCore",
+				"GraphEditor",
+				"KismetCompiler",
+				"Slate"
 			}
 		);
 		

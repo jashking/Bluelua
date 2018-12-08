@@ -104,6 +104,19 @@ void ILuaImplementableInterface::CleanAllLuaImplementableObject(FLuaState* InLua
 	}
 }
 
+void ILuaImplementableInterface::MyProcessInternal1(UObject* Context, FFrame& Stack, void* const Z_Param__Result)
+{
+	//P_GET_PROPERTY(UNameProperty, FunctionName);
+
+	P_GET_UBOOL(bInBool);
+	P_GET_PROPERTY(UIntProperty, InInt);
+	P_GET_UBOOL_REF(bOutBool);
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	//P_THIS->TestLua(FunctionName, bInBool);
+	P_NATIVE_END;
+}
+
 void ILuaImplementableInterface::PreRegisterLua(const FString& InLuaFilePath)
 {
 	if (!InLuaFilePath.IsEmpty())

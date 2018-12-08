@@ -25,7 +25,9 @@ public:
 	bool FetchLuaModule();
 
 	static void CleanAllLuaImplementableObject(FLuaState* InLuaState = nullptr);
-	
+
+	static void MyProcessInternal1(UObject* Context, FFrame& Stack, void* const Z_Param__Result);
+
 protected:
 	void PreRegisterLua(const FString& InLuaFilePath);
 
