@@ -161,7 +161,7 @@ int FLuaUObject::Index(lua_State* L)
 	}
 	else if (UProperty* Property = Class->FindPropertyByName(PropertyName))
 	{
-		return FLuaObjectBase::PushProperty(L, Property, LuaUObject->Source.Get(), false);
+		return FLuaObjectBase::PushProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(LuaUObject->Source.Get()), LuaUObject->Source.Get(), false);
 	}
 	else if (FCStringAnsi::Strcmp(PropertyName, "ToLuaObject") == 0)
 	{
@@ -192,7 +192,7 @@ int FLuaUObject::NewIndex(lua_State* L)
 			luaL_error(L, "Can't write to a readonly property[%s] in object[%s]!", PropertyName, TCHAR_TO_UTF8(*(LuaUObject->Source->GetName())));
 		}
 
-		FLuaObjectBase::FetchProperty(L, Property, LuaUObject->Source.Get(), 3);
+		FLuaObjectBase::FetchProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(LuaUObject->Source.Get()), 3);
 	}
 	else
 	{

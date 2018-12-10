@@ -116,7 +116,7 @@ int FLuaUStruct::Index(lua_State* L)
 	const char* PropertyName = lua_tostring(L, 2);
 	if (UProperty* Property = FindStructPropertyByName(LuaUStruct->Source.Get(), PropertyName))
 	{
-		return FLuaObjectBase::PushProperty(L, Property, LuaUStruct->ScriptBuffer, false);
+		return FLuaObjectBase::PushProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(LuaUStruct->ScriptBuffer), nullptr, false);
 	}
 
 	return 0;
@@ -141,7 +141,7 @@ int FLuaUStruct::NewIndex(lua_State* L)
 			luaL_error(L, "Can't write to a readonly property[%s] in struct[%s]!", PropertyName, TCHAR_TO_UTF8(*(LuaUStruct->Source->GetName())));
 		}
 
-		FetchProperty(L, Property, LuaUStruct->ScriptBuffer, 3);
+		FLuaObjectBase::FetchProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(LuaUStruct->ScriptBuffer), 3);
 	}
 	else
 	{
