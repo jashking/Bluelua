@@ -18,7 +18,7 @@ public:
 	bool DoString(const FString& String);
 	bool DoFile(const FString& FilePath);
 	bool CallLuaFunction(UFunction* SignatureFunction, void* Parameters, bool bWithSelf = true);
-
+	bool CallLuaFunction(int32 InParamsCount, int32 OutParamsCount, bool bWithSelf = true);
 	bool GetFromCache(void* InObject);
 	bool AddToCache(void* InObject);
 

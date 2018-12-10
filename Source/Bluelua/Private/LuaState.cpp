@@ -235,6 +235,24 @@ bool FLuaState::CallLuaFunction(UFunction* SignatureFunction, void* Parameters, 
 	return true;
 }
 
+bool FLuaState::CallLuaFunction(int32 InParamsCount, int32 OutParamsCount, bool bWithSelf/* = true*/)
+{
+	SCOPE_CYCLE_COUNTER(STAT_CallLuaFunction);
+
+	lua_pushcfunction(L, FLuaState::LuaError);
+	const int32 LuaErrorFunctionIndex = bWithSelf ? lua_absindex(L, -(InParamsCount + 3)) : lua_absindex(L, -(InParamsCount + 2));
+	lua_insert(L, LuaErrorFunctionIndex);
+
+	if (LUA_OK != lua_pcall(L, InParamsCount, OutParamsCount, LuaErrorFunctionIndex))
+	{
+		lua_remove(L, LuaErrorFunctionIndex);
+		return false;
+	}
+
+	lua_remove(L, LuaErrorFunctionIndex);
+	return true;
+}
+
 bool FLuaState::GetFromCache(void* InObject)
 {
 	if (!InObject || !L || CacheObjectRefIndex == LUA_NOREF)

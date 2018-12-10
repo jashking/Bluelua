@@ -33,8 +33,17 @@ protected:
 	virtual void OnRelease();
 	virtual bool OnProcessEvent(UFunction* Function, void* Parameters);
 
+	bool InitBPFunctionOverriding();
+	void ClearBPFunctionOverriding();
+	bool HasBPFunctionOverrding(const FString& FunctionName);
+	bool PrepareLuaFunction(const FString& FunctionName);
+
 	static void AddToLuaObjectList(FLuaState* InLuaState, ILuaImplementableInterface* Object);
 	static void RemoveFromLuaObjectList(FLuaState* InLuaState, ILuaImplementableInterface* Object);
+
+	static int FillBPFunctionOverrideOutProperty(struct lua_State* L);
+	static void ProcessBPFunctionOverride(UObject* Context, struct FFrame& Stack, void* const Z_Param__Result);
+	bool CallBPFunctionOverride(UFunction* Function, FFrame& Stack, void* const Z_Param__Result);
 
 protected:
 	TSharedPtr<FLuaState> LuaState;
@@ -42,6 +51,8 @@ protected:
 	FString BindingLuaPath;
 
 	int ModuleReferanceIndex = -2;
+
+	TSet<FString> OverridedBPFunctionList;
 
 	static TMap<FLuaState*, TSet<ILuaImplementableInterface*>> LuaImplementableObjects;
 };
