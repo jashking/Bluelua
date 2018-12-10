@@ -537,7 +537,7 @@ int FLuaState::FillOutProperty(lua_State* L)
 	int32 OutParamUpValueIndex = 2;
 	if (ReturnValue)
 	{
-		FLuaObjectBase::FetchProperty(L, ReturnValue, Parameters, lua_upvalueindex(OutParamUpValueIndex));
+		FLuaObjectBase::FetchProperty(L, ReturnValue, ReturnValue->ContainerPtrToValuePtr<uint8>(Parameters), lua_upvalueindex(OutParamUpValueIndex));
 		++OutParamUpValueIndex;
 	}
 
@@ -547,7 +547,7 @@ int FLuaState::FillOutProperty(lua_State* L)
 		{
 			if ((ParamIter->PropertyFlags & (CPF_ConstParm | CPF_OutParm)) == CPF_OutParm)
 			{
-				FLuaObjectBase::FetchProperty(L, *ParamIter, Parameters, lua_upvalueindex(OutParamUpValueIndex++));
+				FLuaObjectBase::FetchProperty(L, *ParamIter, (*ParamIter)->ContainerPtrToValuePtr<uint8>(Parameters), lua_upvalueindex(OutParamUpValueIndex++));
 			}
 		}
 	}

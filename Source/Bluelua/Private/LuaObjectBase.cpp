@@ -32,7 +32,7 @@ static int PushBaseProperty(lua_State* L, UProperty* Property, void* Params, boo
 	return FLuaObjectBase::Push(L, CastedProperty->GetPropertyValue_InContainer(Params));
 }
 
-template<typename T, typename TCppType>
+template<typename T>
 static bool FetchBaseProperty(lua_State* L, UProperty* Property, void* Params, int32 Index)
 {
 	auto CastedProperty = Cast<T>(Property);
@@ -41,13 +41,13 @@ static bool FetchBaseProperty(lua_State* L, UProperty* Property, void* Params, i
 		return false;
 	}
 
-	TCppType Value;
+	typename T::TCppType Value;
 	if (!FLuaObjectBase::Fetch(L, Index, Value))
 	{
 		return false;
 	}
 
-	CastedProperty->SetPropertyValue_InContainer(Params, Value);
+	CastedProperty->SetPropertyValue(Params, Value);
 
 	return true;
 }
@@ -90,20 +90,20 @@ void FLuaObjectBase::Init()
 	RegisterPusher<UMulticastDelegateProperty>(PushMulticastDelegateProperty);
 	RegisterPusher<UDelegateProperty>(PushDelegateProperty);
 
-	RegisterFetcher<UByteProperty>(FetchBaseProperty<UByteProperty, UByteProperty::TCppType>);
-	RegisterFetcher<UInt8Property>(FetchBaseProperty<UInt8Property, UInt8Property::TCppType>);
-	RegisterFetcher<UInt16Property>(FetchBaseProperty<UInt16Property, UInt16Property::TCppType>);
-	RegisterFetcher<UUInt16Property>(FetchBaseProperty<UUInt16Property, UUInt16Property::TCppType>);
-	RegisterFetcher<UIntProperty>(FetchBaseProperty<UIntProperty, UIntProperty::TCppType>);
-	RegisterFetcher<UUInt32Property>(FetchBaseProperty<UUInt32Property, UUInt32Property::TCppType>);
-	RegisterFetcher<UInt64Property>(FetchBaseProperty<UInt64Property, UInt64Property::TCppType>);
-	RegisterFetcher<UUInt64Property>(FetchBaseProperty<UUInt64Property, UUInt64Property::TCppType>);
-	RegisterFetcher<UBoolProperty>(FetchBaseProperty<UBoolProperty, UBoolProperty::TCppType>);
-	RegisterFetcher<UFloatProperty>(FetchBaseProperty<UFloatProperty, UFloatProperty::TCppType>);
-	RegisterFetcher<UDoubleProperty>(FetchBaseProperty<UDoubleProperty, UDoubleProperty::TCppType>);
-	RegisterFetcher<UStrProperty>(FetchBaseProperty<UStrProperty, UStrProperty::TCppType>);
-	RegisterFetcher<UTextProperty>(FetchBaseProperty<UTextProperty, UTextProperty::TCppType>);
-	RegisterFetcher<UNameProperty>(FetchBaseProperty<UNameProperty, UNameProperty::TCppType>);
+	RegisterFetcher<UByteProperty>(FetchBaseProperty<UByteProperty>);
+	RegisterFetcher<UInt8Property>(FetchBaseProperty<UInt8Property>);
+	RegisterFetcher<UInt16Property>(FetchBaseProperty<UInt16Property>);
+	RegisterFetcher<UUInt16Property>(FetchBaseProperty<UUInt16Property>);
+	RegisterFetcher<UIntProperty>(FetchBaseProperty<UIntProperty>);
+	RegisterFetcher<UUInt32Property>(FetchBaseProperty<UUInt32Property>);
+	RegisterFetcher<UInt64Property>(FetchBaseProperty<UInt64Property>);
+	RegisterFetcher<UUInt64Property>(FetchBaseProperty<UUInt64Property>);
+	RegisterFetcher<UBoolProperty>(FetchBaseProperty<UBoolProperty>);
+	RegisterFetcher<UFloatProperty>(FetchBaseProperty<UFloatProperty>);
+	RegisterFetcher<UDoubleProperty>(FetchBaseProperty<UDoubleProperty>);
+	RegisterFetcher<UStrProperty>(FetchBaseProperty<UStrProperty>);
+	RegisterFetcher<UTextProperty>(FetchBaseProperty<UTextProperty>);
+	RegisterFetcher<UNameProperty>(FetchBaseProperty<UNameProperty>);
 	RegisterFetcher<UStructProperty>(FetchStructProperty);
 	RegisterFetcher<UEnumProperty>(FetchEnumProperty);
 	RegisterFetcher<UClassProperty>(FetchClassProperty);
@@ -359,7 +359,7 @@ bool FLuaObjectBase::FetchStructProperty(lua_State* L, UProperty* Property, void
 {
 	if (auto StructProperty = Cast<UStructProperty>(Property))
 	{
-		return FLuaUStruct::Fetch(L, Index, StructProperty->Struct, StructProperty->ContainerPtrToValuePtr<uint8>(Params));
+		return FLuaUStruct::Fetch(L, Index, StructProperty->Struct, (uint8*)Params);
 	}
 
 	return false;
@@ -370,7 +370,7 @@ bool FLuaObjectBase::FetchEnumProperty(lua_State* L, UProperty* Property, void* 
 	if (auto EnumProperty = Cast<UEnumProperty>(Property))
 	{
 		UNumericProperty* UnderlyingProperty = EnumProperty->GetUnderlyingProperty();
-		UnderlyingProperty->SetIntPropertyValue(EnumProperty->ContainerPtrToValuePtr<void>(Params), lua_tointeger(L, Index));
+		UnderlyingProperty->SetIntPropertyValue(Params, lua_tointeger(L, Index));
 	}
 
 	return false;
@@ -380,7 +380,7 @@ bool FLuaObjectBase::FetchClassProperty(lua_State* L, UProperty* Property, void*
 {
 	if (auto ClassProperty = Cast<UClassProperty>(Property))
 	{
-		ClassProperty->SetPropertyValue_InContainer(Params, FLuaUClass::Fetch(L, Index));
+		ClassProperty->SetPropertyValue(Params, FLuaUClass::Fetch(L, Index));
 
 		return true;
 	}
@@ -392,7 +392,7 @@ bool FLuaObjectBase::FetchObjectProperty(lua_State* L, UProperty* Property, void
 {
 	if (auto ObjectProperty = Cast<UObjectProperty>(Property))
 	{
-		ObjectProperty->SetObjectPropertyValue_InContainer(Params, FLuaUObject::Fetch(L, Index));
+		ObjectProperty->SetObjectPropertyValue(Params, FLuaUObject::Fetch(L, Index));
 
 		return true;
 	}
@@ -410,7 +410,7 @@ bool FLuaObjectBase::FetchArrayProperty(lua_State* L, UProperty* Property, void*
 
 	if (auto ArrayProperty = Cast<UArrayProperty>(Property))
 	{
-		FScriptArrayHelper_InContainer ArrayHelper(ArrayProperty, Params);
+		FScriptArrayHelper ArrayHelper(ArrayProperty, Params);
 
 		int32 Count = 0;
 		lua_pushnil(L); // initial key, stack = [..., nil]
@@ -448,7 +448,7 @@ bool FLuaObjectBase::FetchSetProperty(lua_State* L, UProperty* Property, void* P
 
 	if (auto SetProperty = Cast<USetProperty>(Property))
 	{
-		FScriptSetHelper_InContainer SetHelper(SetProperty, Params);
+		FScriptSetHelper SetHelper(SetProperty, Params);
 
 		lua_pushnil(L);
 		while (lua_next(L, Index))
@@ -475,7 +475,7 @@ bool FLuaObjectBase::FetchMapProperty(lua_State* L, UProperty* Property, void* P
 
 	if (auto MapProperty = Cast<UMapProperty>(Property))
 	{
-		FScriptMapHelper_InContainer MapHelper(MapProperty, Params);
+		FScriptMapHelper MapHelper(MapProperty, Params);
 
 		lua_pushnil(L);
 		while (lua_next(L, Index))
@@ -509,7 +509,7 @@ bool FLuaObjectBase::FetchMulticastDelegateProperty(lua_State* L, UProperty* Pro
 		return false;
 	}
 
-	FMulticastScriptDelegate* MulticastScriptDelegate = DelegateProperty->GetPropertyValuePtr_InContainer(Params);
+	FMulticastScriptDelegate* MulticastScriptDelegate = DelegateProperty->GetPropertyValuePtr(Params);
 	if (MulticastScriptDelegate)
 	{
 		MulticastScriptDelegate->AddUnique(ScriptDelegate);
@@ -526,7 +526,7 @@ bool FLuaObjectBase::FetchDelegateProperty(lua_State* L, UProperty* Property, vo
 		return false;
 	}
 
-	FScriptDelegate* ScriptDelegate = DelegateProperty->GetPropertyValuePtr_InContainer(Params);
+	FScriptDelegate* ScriptDelegate = DelegateProperty->GetPropertyValuePtr(Params);
 
 	return FLuaUDelegate::Fetch(L, Index, DelegateProperty->SignatureFunction, ScriptDelegate);
 }
@@ -644,7 +644,7 @@ int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Funct
 		}
 		else
 		{
-			FetchProperty(L, ParamProperty, FuncParams.GetStructMemory(), ParamIndex++);
+			FetchProperty(L, ParamProperty, ParamProperty->ContainerPtrToValuePtr<uint8>(FuncParams.GetStructMemory()), ParamIndex++);
 		}
 	}
 

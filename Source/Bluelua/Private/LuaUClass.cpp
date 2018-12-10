@@ -163,7 +163,7 @@ int FLuaUClass::NewIndex(lua_State* L)
 			luaL_error(L, "Can't write to a readonly property[%s] in class[%s]!", PropertyName, TCHAR_TO_UTF8(*(LuaUClass->Source->GetName())));
 		}
 
-		FLuaObjectBase::FetchProperty(L, Property, ClassDefaultObject, 3);
+		FLuaObjectBase::FetchProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(ClassDefaultObject), 3);
 	}
 	else
 	{
