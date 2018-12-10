@@ -20,7 +20,7 @@ static TMap<UClass*, FLuaObjectBase::PushPropertyFunction> GPusherMap;
 static TMap<UClass*, FLuaObjectBase::FetchPropertyFunction> GFetcherMap;
 
 template<typename T>
-static int PushBaseProperty(lua_State* L, UProperty* Property, void* Params, bool)
+static int PushBaseProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	auto CastedProperty = Cast<T>(Property);
 	if (!CastedProperty)
@@ -29,7 +29,7 @@ static int PushBaseProperty(lua_State* L, UProperty* Property, void* Params, boo
 		return 1;
 	}
 
-	return FLuaObjectBase::Push(L, CastedProperty->GetPropertyValue_InContainer(Params));
+	return FLuaObjectBase::Push(L, CastedProperty->GetPropertyValue(Params));
 }
 
 template<typename T>
@@ -129,14 +129,14 @@ FLuaObjectBase::FetchPropertyFunction FLuaObjectBase::GetFetcher(UClass* Class)
 	return FetcherIter ? *FetcherIter : nullptr;
 }
 
-int FLuaObjectBase::PushProperty(lua_State* L, UProperty* Property, void* Params, bool bCopyValue /*= true*/)
+int FLuaObjectBase::PushProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object/* = nullptr*/, bool bCopyValue/* = true*/)
 {
 	SCOPE_CYCLE_COUNTER(STAT_PushPropertyToLua);
 
 	auto Pusher = GetPusher(Property->GetClass());
 	if (Pusher)
 	{
-		return Pusher(L, Property, Params, bCopyValue);
+		return Pusher(L, Property, Params, Object, bCopyValue);
 	}
 	else
 	{
@@ -148,13 +148,13 @@ int FLuaObjectBase::PushProperty(lua_State* L, UProperty* Property, void* Params
 	}
 }
 
-int FLuaObjectBase::PushStructProperty(lua_State* L, UProperty* Property, void* Params, bool bCopyValue /*= true*/)
+int FLuaObjectBase::PushStructProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool bCopyValue/* = true*/)
 {
 	UStructProperty* StructProperty = Cast<UStructProperty>(Property);
 
 	if (UScriptStruct* ScriptStruct = Cast<UScriptStruct>(StructProperty->Struct))
 	{
-		FLuaUStruct::Push(L, ScriptStruct, StructProperty->ContainerPtrToValuePtr<void>(Params), bCopyValue);
+		FLuaUStruct::Push(L, ScriptStruct, Params, bCopyValue);
 	}
 	else
 	{
@@ -164,7 +164,7 @@ int FLuaObjectBase::PushStructProperty(lua_State* L, UProperty* Property, void* 
 	return 1;
 }
 
-int FLuaObjectBase::PushEnumProperty(lua_State* L, UProperty* Property, void* Params, bool)
+int FLuaObjectBase::PushEnumProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	UEnumProperty* EnumProperty = Cast<UEnumProperty>(Property);
 
@@ -173,25 +173,25 @@ int FLuaObjectBase::PushEnumProperty(lua_State* L, UProperty* Property, void* Pa
 	return 1;
 }
 
-int FLuaObjectBase::PushClassProperty(lua_State* L, UProperty* Property, void* Params, bool)
+int FLuaObjectBase::PushClassProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	UClassProperty* ClassProperty = Cast<UClassProperty>(Property);
 
-	return FLuaUClass::Push(L, Cast<UClass>(ClassProperty->GetObjectPropertyValue_InContainer(Params)));
+	return FLuaUClass::Push(L, Cast<UClass>(ClassProperty->GetObjectPropertyValue(Params)));
 }
 
-int FLuaObjectBase::PushObjectProperty(lua_State* L, UProperty* Property, void* Params, bool)
+int FLuaObjectBase::PushObjectProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	UObjectProperty* ObjectProperty = Cast<UObjectProperty>(Property);
 
-	return FLuaUObject::Push(L, ObjectProperty->GetObjectPropertyValue_InContainer(Params));
+	return FLuaUObject::Push(L, ObjectProperty->GetObjectPropertyValue(Params));
 }
 
-int FLuaObjectBase::PushArrayProperty(lua_State* L, UProperty* Property, void* Params, bool)
+int FLuaObjectBase::PushArrayProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property);
 
-	FScriptArrayHelper_InContainer ArrayHelper(ArrayProperty, Params);
+	FScriptArrayHelper ArrayHelper(ArrayProperty, Params);
 	const int32 Num = ArrayHelper.Num();
 
 	lua_newtable(L);
@@ -204,11 +204,11 @@ int FLuaObjectBase::PushArrayProperty(lua_State* L, UProperty* Property, void* P
 	return 1;
 }
 
-int FLuaObjectBase::PushSetProperty(lua_State* L, UProperty* Property, void* Params, bool)
+int FLuaObjectBase::PushSetProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	USetProperty* SetProperty = Cast<USetProperty>(Property);
 
-	FScriptSetHelper_InContainer SetHelper(SetProperty, Params);
+	FScriptSetHelper SetHelper(SetProperty, Params);
 	const int32 Num = SetHelper.Num();
 
 	lua_newtable(L);
@@ -221,11 +221,11 @@ int FLuaObjectBase::PushSetProperty(lua_State* L, UProperty* Property, void* Par
 	return 1;
 }
 
-int FLuaObjectBase::PushMapProperty(lua_State* L, UProperty* Property, void* Params, bool)
+int FLuaObjectBase::PushMapProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	UMapProperty* MapProperty = Cast<UMapProperty>(Property);
 
-	FScriptMapHelper_InContainer MapHelper(MapProperty, Params);
+	FScriptMapHelper MapHelper(MapProperty, Params);
 	const int32 Num = MapHelper.Num();
 
 	lua_newtable(L);
@@ -233,25 +233,25 @@ int FLuaObjectBase::PushMapProperty(lua_State* L, UProperty* Property, void* Par
 	{
 		uint8* PairPtr = MapHelper.GetPairPtr(Index);
 		PushProperty(L, MapProperty->KeyProp, PairPtr + MapProperty->MapLayout.KeyOffset);
-		PushProperty(L, MapProperty->ValueProp, PairPtr);
+		PushProperty(L, MapProperty->ValueProp, PairPtr + MapProperty->MapLayout.ValueOffset);
 		lua_settable(L, -3);
 	}
 
 	return 1;
 }
 
-int FLuaObjectBase::PushMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, bool)
+int FLuaObjectBase::PushMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	auto DelegateProperty = Cast<UMulticastDelegateProperty>(Property);
 
-	return FLuaUDelegate::Push(L, (UObject*)Params, DelegateProperty->GetPropertyValuePtr_InContainer(Params), DelegateProperty->SignatureFunction, true);
+	return FLuaUDelegate::Push(L, Object, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, true);
 }
 
-int FLuaObjectBase::PushDelegateProperty(lua_State* L, UProperty* Property, void* Params, bool)
+int FLuaObjectBase::PushDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	auto DelegateProperty = Cast<UDelegateProperty>(Property);
 
-	return FLuaUDelegate::Push(L, (UObject*)Params, DelegateProperty->GetPropertyValuePtr_InContainer(Params), DelegateProperty->SignatureFunction, false);
+	return FLuaUDelegate::Push(L, Object, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, false);
 }
 
 int FLuaObjectBase::Push(lua_State* L, int8 Value)
@@ -483,7 +483,7 @@ bool FLuaObjectBase::FetchMapProperty(lua_State* L, UProperty* Property, void* P
 			const int32 ElementIndex = MapHelper.AddDefaultValue_Invalid_NeedsRehash();
 
 			uint8* PairPtr = MapHelper.GetPairPtr(ElementIndex);
-			FetchProperty(L, MapProperty->ValueProp, PairPtr, -1);
+			FetchProperty(L, MapProperty->ValueProp, PairPtr + MapProperty->MapLayout.ValueOffset, -1);
 			FetchProperty(L, MapProperty->KeyProp, PairPtr + MapProperty->MapLayout.KeyOffset, -2);
 			lua_pop(L, 1);
 		}
@@ -653,7 +653,7 @@ int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Funct
 	int32 ReturnNum = 0;
 	if (ReturnValue)
 	{
-		FLuaObjectBase::PushProperty(L, ReturnValue, FuncParams.GetStructMemory());
+		FLuaObjectBase::PushProperty(L, ReturnValue, ReturnValue->ContainerPtrToValuePtr<uint8>(FuncParams.GetStructMemory()));
 		ReturnNum++;
 	}
 
@@ -663,7 +663,7 @@ int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Funct
 		{
 			if ((ParamIter->PropertyFlags & (CPF_ConstParm | CPF_OutParm)) == CPF_OutParm)
 			{
-				FLuaObjectBase::PushProperty(L, *ParamIter, FuncParams.GetStructMemory());
+				FLuaObjectBase::PushProperty(L, *ParamIter, (*ParamIter)->ContainerPtrToValuePtr<uint8>(FuncParams.GetStructMemory()));
 				ReturnNum++;
 			}
 		}

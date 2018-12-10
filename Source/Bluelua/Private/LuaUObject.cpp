@@ -161,7 +161,7 @@ int FLuaUObject::Index(lua_State* L)
 	}
 	else if (UProperty* Property = Class->FindPropertyByName(PropertyName))
 	{
-		return FLuaObjectBase::PushProperty(L, Property, LuaUObject->Source.Get(), false);
+		return FLuaObjectBase::PushProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(LuaUObject->Source.Get()), LuaUObject->Source.Get(), false);
 	}
 	else if (FCStringAnsi::Strcmp(PropertyName, "ToLuaObject") == 0)
 	{

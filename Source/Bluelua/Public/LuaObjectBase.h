@@ -9,23 +9,23 @@ class FLuaState;
 class BLUELUA_API FLuaObjectBase
 {
 public:
-	typedef int(*PushPropertyFunction)(lua_State* L, UProperty* Property, void* Params, bool bCopyValue);
+	typedef int(*PushPropertyFunction)(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool bCopyValue);
 	typedef bool(*FetchPropertyFunction)(lua_State* L, UProperty* Property, void* Params, int32 Index);
 
 	static void Init();
 	static PushPropertyFunction GetPusher(UClass* Class);
 	static FetchPropertyFunction GetFetcher(UClass* Class);
 
-	static int PushProperty(lua_State* L, UProperty* Property, void* Params, bool bCopyValue = true);
-	static int PushStructProperty(lua_State* L, UProperty* Property, void* Params, bool bCopyValue = true);
-	static int PushEnumProperty(lua_State* L, UProperty* Property, void* Params, bool);
-	static int PushClassProperty(lua_State* L, UProperty* Property, void* Params, bool);
-	static int PushObjectProperty(lua_State* L, UProperty* Property, void* Params, bool);
-	static int PushArrayProperty(lua_State* L, UProperty* Property, void* Params, bool);
-	static int PushSetProperty(lua_State* L, UProperty* Property, void* Params, bool);
-	static int PushMapProperty(lua_State* L, UProperty* Property, void* Params, bool);
-	static int PushMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, bool);
-	static int PushDelegateProperty(lua_State* L, UProperty* Property, void* Params, bool);
+	static int PushProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object = nullptr, bool bCopyValue = true);
+	static int PushStructProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool bCopyValue = true);
+	static int PushEnumProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
+	static int PushClassProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
+	static int PushObjectProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
+	static int PushArrayProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
+	static int PushSetProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
+	static int PushMapProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
+	static int PushMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
+	static int PushDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
 
 	inline static int Push(lua_State* L, int8 Value);
 	inline static int Push(lua_State* L, uint8 Value);

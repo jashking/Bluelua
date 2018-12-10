@@ -116,7 +116,7 @@ int FLuaUStruct::Index(lua_State* L)
 	const char* PropertyName = lua_tostring(L, 2);
 	if (UProperty* Property = FindStructPropertyByName(LuaUStruct->Source.Get(), PropertyName))
 	{
-		return FLuaObjectBase::PushProperty(L, Property, LuaUStruct->ScriptBuffer, false);
+		return FLuaObjectBase::PushProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(LuaUStruct->ScriptBuffer), nullptr, false);
 	}
 
 	return 0;

@@ -208,7 +208,7 @@ bool FLuaState::CallLuaFunction(UFunction* SignatureFunction, void* Parameters, 
 		else
 		{
 			++InParamsCount;
-			FLuaObjectBase::PushProperty(L, ParamProperty, Parameters);
+			FLuaObjectBase::PushProperty(L, ParamProperty, ParamProperty->ContainerPtrToValuePtr<uint8>(Parameters));
 		}
 	}
 

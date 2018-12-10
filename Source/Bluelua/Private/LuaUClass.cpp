@@ -136,7 +136,8 @@ int FLuaUClass::Index(lua_State* L)
 	}
 	else if (UProperty* Property = LuaUClass->Source->FindPropertyByName(PropertyName))
 	{
-		return FLuaObjectBase::PushProperty(L, Property, LuaUClass->Source->GetDefaultObject(), false);
+		UObject* ClassDefaultObject = LuaUClass->Source->GetDefaultObject();
+		return FLuaObjectBase::PushProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(ClassDefaultObject), ClassDefaultObject, false);
 	}
 
 	return 0;
