@@ -347,19 +347,10 @@ int ILuaImplementableInterface::FillBPFunctionOverrideOutProperty(struct lua_Sta
 	FOutParmRec* OutParamsList = (FOutParmRec*)lua_touserdata(L, lua_upvalueindex(2 + OutParamsCount));
 
 	int32 OutParamUpValueIndex = 2;
-
-	FOutParmRec* OutParam = OutParamsList;
-
-	bool bOutValue = false;
-	FLuaObjectBase::Fetch(L, lua_upvalueindex(OutParamUpValueIndex++), bOutValue);
-	UBoolProperty* BoolProperty = Cast<UBoolProperty>(OutParam->Property);
-	BoolProperty->SetPropertyValue(OutParam->PropAddr, bOutValue);
-	//FLuaObjectBase::FetchProperty(L, OutParam->Property, OutParam->PropAddr, lua_upvalueindex(OutParamUpValueIndex++));
-
-	//for (FOutParmRec* OutParam = OutParamsList; OutParam; OutParam = OutParam->NextOutParm)
-	//{
-	//	FLuaObjectBase::FetchProperty(L, OutParam->Property, OutParam->PropAddr, lua_upvalueindex(OutParamUpValueIndex++));
-	//}
+	for (FOutParmRec* OutParam = OutParamsList; OutParam; OutParam = OutParam->NextOutParm)
+	{
+		FLuaObjectBase::FetchProperty(L, OutParam->Property, OutParam->PropAddr, lua_upvalueindex(OutParamUpValueIndex++));
+	}
 
 	return 0;
 }
@@ -468,7 +459,7 @@ bool ILuaImplementableInterface::CallBPFunctionOverride(UFunction* Function, FFr
 			Stack.Step(Stack.Object, Param);
 
 			++InParamsCount;
-			FLuaObjectBase::PushProperty(L, Property, Frame);
+			FLuaObjectBase::PushProperty(L, Property, Param);
 		}
 	}
 
