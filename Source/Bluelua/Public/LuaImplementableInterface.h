@@ -20,18 +20,25 @@ class BLUELUA_API ILuaImplementableInterface
 	GENERATED_BODY()
 
 public:
-	void PreInit(TSharedPtr<FLuaState> InLuaState = nullptr);
 	bool IsLuaBound() const;
-	bool FetchLuaModule();
+	bool CastToLua();
 
 	static void CleanAllLuaImplementableObject(FLuaState* InLuaState = nullptr);
 	
 protected:
-	void PreRegisterLua(const FString& InLuaFilePath);
+	virtual bool OnInitLuaBinding();
+	virtual void OnReleaseLuaBinding();
+	virtual bool OnProcessLuaOverrideEvent(UFunction* Function, void* Parameters);
 
-	virtual bool OnInit(const FString& InLuaFilePath, TSharedPtr<FLuaState> InLuaState = nullptr);
-	virtual void OnRelease();
-	virtual bool OnProcessEvent(UFunction* Function, void* Parameters);
+	UFUNCTION(BlueprintNativeEvent)
+	FString OnInitBindingLuaPath();
+	virtual FString OnInitBindingLuaPath_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	bool ShouldEnableLuaBinding();
+	virtual bool ShouldEnableLuaBinding_Implementation();
+
+	virtual TSharedPtr<FLuaState> OnInitLuaState();
 
 	bool InitBPFunctionOverriding();
 	void ClearBPFunctionOverriding();
@@ -47,9 +54,6 @@ protected:
 
 protected:
 	TSharedPtr<FLuaState> LuaState;
-
-	FString BindingLuaPath;
-
 	int ModuleReferanceIndex = -2;
 
 	TSet<FString> OverridedBPFunctionList;

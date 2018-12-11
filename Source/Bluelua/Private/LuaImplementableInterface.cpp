@@ -1,6 +1,5 @@
 #include "LuaImplementableInterface.h"
 
-#include "Misc/Paths.h"
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 
@@ -11,10 +10,10 @@
 #include "LuaStackGuard.h"
 #include "LuaUObject.h"
 
-DECLARE_CYCLE_STAT(TEXT("InitLuaObject"), STAT_InitLuaObject, STATGROUP_Bluelua);
-DECLARE_CYCLE_STAT(TEXT("ReleaseLuaObject"), STAT_ReleaseLuaObject, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("InitLuaBinding"), STAT_InitLuaBinding, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ReleaseLuaBinding"), STAT_ReleaseLuaBinding, STATGROUP_Bluelua);
 DECLARE_CYCLE_STAT(TEXT("CleanAllLuaObject"), STAT_CleanAllLuaObject, STATGROUP_Bluelua);
-DECLARE_CYCLE_STAT(TEXT("ProcessLuaObjectOverrideEvent"), STAT_ProcessLuaObjectOverrideEvent, STATGROUP_Bluelua);
+DECLARE_CYCLE_STAT(TEXT("ProcessLuaOverrideEvent"), STAT_ProcessLuaOverrideEvent, STATGROUP_Bluelua);
 DECLARE_CYCLE_STAT(TEXT("CallBPFunctionOverride"), STAT_CallBPFunctionOverride, STATGROUP_Bluelua);
 DECLARE_CYCLE_STAT(TEXT("FillBPFunctionOverrideOutProperty"), STAT_FillBPFunctionOverrideOutProperty, STATGROUP_Bluelua);
 
@@ -42,26 +41,44 @@ private:
 	const char* GlobalName;
 };
 
-TMap<FLuaState*, TSet<ILuaImplementableInterface*>> ILuaImplementableInterface::LuaImplementableObjects;
-
-void ILuaImplementableInterface::PreInit(TSharedPtr<FLuaState> InLuaState /*= nullptr*/)
+struct EventOnInitBindingLuaPath_Parms
 {
-	OnInit(BindingLuaPath, InLuaState);
-}
+	FString ReturnValue;
+};
+
+struct EventShouldEnableLuaBinding_Parms
+{
+	bool ReturnValue;
+
+	/** Constructor, initializes return property only **/
+	EventShouldEnableLuaBinding_Parms()
+		: ReturnValue(false)
+	{
+	}
+};
+
+TMap<FLuaState*, TSet<ILuaImplementableInterface*>> ILuaImplementableInterface::LuaImplementableObjects;
 
 bool ILuaImplementableInterface::IsLuaBound() const
 {
 	return (LuaState.IsValid() && ModuleReferanceIndex != LUA_NOREF);
 }
 
-bool ILuaImplementableInterface::FetchLuaModule()
+bool ILuaImplementableInterface::CastToLua()
 {
+	if (!IsLuaBound())
+	{
+		OnInitLuaBinding();
+	}
+
 	if (IsLuaBound())
 	{
-		lua_rawgeti(LuaState->GetState(), LUA_REGISTRYINDEX, ModuleReferanceIndex);
-		if (lua_type(LuaState->GetState(), -1) != LUA_TTABLE)
+		lua_State* L = LuaState->GetState();
+
+		lua_rawgeti(L, LUA_REGISTRYINDEX, ModuleReferanceIndex);
+		if (lua_type(L, -1) != LUA_TTABLE)
 		{
-			lua_pop(LuaState->GetState(), 1);
+			lua_pop(L, 1);
 			return false;
 		}
 
@@ -92,7 +109,7 @@ void ILuaImplementableInterface::CleanAllLuaImplementableObject(FLuaState* InLua
 		UObject* Object = Cast<UObject>(Iter);
 		if (Object && Object->IsValidLowLevel())
 		{
-			Iter->OnRelease();
+			Iter->OnReleaseLuaBinding();
 		}
 	}
 
@@ -106,28 +123,9 @@ void ILuaImplementableInterface::CleanAllLuaImplementableObject(FLuaState* InLua
 	}
 }
 
-void ILuaImplementableInterface::PreRegisterLua(const FString& InLuaFilePath)
+bool ILuaImplementableInterface::OnInitLuaBinding()
 {
-	if (!InLuaFilePath.IsEmpty())
-	{
-		BindingLuaPath = InLuaFilePath;
-	}
-}
-
-bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr<FLuaState> InLuaState/* = nullptr*/)
-{
-	SCOPE_CYCLE_COUNTER(STAT_InitLuaObject);
-
-	if (InLuaFilePath.IsEmpty())
-	{
-		return false;
-	}
-
-	if (!BindingLuaPath.Equals(InLuaFilePath))
-	{
-		// new lua file
-		OnRelease();
-	}
+	SCOPE_CYCLE_COUNTER(STAT_InitLuaBinding);
 
 	if (IsLuaBound())
 	{
@@ -135,13 +133,31 @@ bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr
 		return true;
 	}
 
-	LuaState = InLuaState.IsValid() ? InLuaState : FBlueluaModule::Get().GetDefaultLuaState();
-	if (!LuaState.IsValid())
+	UObject* ThisObject = Cast<UObject>(this);
+
+	EventShouldEnableLuaBinding_Parms ShouldEnableLuaBinding_Parms;
+	ThisObject->UObject::ProcessEvent(ThisObject->FindFunctionChecked(FName(TEXT("ShouldEnableLuaBinding"))), &ShouldEnableLuaBinding_Parms);
+	if (!ShouldEnableLuaBinding_Parms.ReturnValue)
 	{
+		// not use lua binding
 		return false;
 	}
 
-	BindingLuaPath = InLuaFilePath;
+	EventOnInitBindingLuaPath_Parms OnInitBindingLuaPath_Parms;
+	ThisObject->UObject::ProcessEvent(ThisObject->FindFunctionChecked(FName(TEXT("OnInitBindingLuaPath"))), &OnInitBindingLuaPath_Parms);
+	if (OnInitBindingLuaPath_Parms.ReturnValue.IsEmpty())
+	{
+		UE_LOG(LogBluelua, Warning, TEXT("Init lua binding in object[%s] failed! Lua file path is empty! "), *ThisObject->GetName());
+		return false;
+	}
+
+	LuaState = OnInitLuaState();
+	if (!LuaState.IsValid())
+	{
+		UE_LOG(LogBluelua, Warning, TEXT("Init lua binding in object[%s] failed! Lua state is invalid! "), *ThisObject->GetName());
+		return false;
+	}
+
 	AddToLuaObjectList(LuaState.Get(), this);
 
 	lua_State* L = LuaState->GetState();
@@ -152,13 +168,15 @@ bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr
 	FLuaUObject::Push(L, Cast<UObject>(this));
 	lua_setglobal(L, "Super");
 
-	if (!LuaState->DoFile(FPaths::ProjectContentDir() / InLuaFilePath))
+	if (!LuaState->DoFile(OnInitBindingLuaPath_Parms.ReturnValue))
 	{
+		UE_LOG(LogBluelua, Warning, TEXT("Init lua binding in object[%s] failed! Do lua file[%s] failed!"), *ThisObject->GetName(), *OnInitBindingLuaPath_Parms.ReturnValue);
 		return false;
 	}
 
 	if (lua_type(L, -1) != LUA_TTABLE)
 	{
+		UE_LOG(LogBluelua, Warning, TEXT("Init lua binding in object[%s] failed! Lua file[%s] should return a table!"), *ThisObject->GetName(), *OnInitBindingLuaPath_Parms.ReturnValue);
 		return false;
 	}
 
@@ -169,9 +187,9 @@ bool ILuaImplementableInterface::OnInit(const FString& InLuaFilePath, TSharedPtr
 	return true;
 }
 
-void ILuaImplementableInterface::OnRelease()
+void ILuaImplementableInterface::OnReleaseLuaBinding()
 {
-	SCOPE_CYCLE_COUNTER(STAT_ReleaseLuaObject);
+	SCOPE_CYCLE_COUNTER(STAT_ReleaseLuaBinding);
 
 	ClearBPFunctionOverriding();
 
@@ -189,10 +207,9 @@ void ILuaImplementableInterface::OnRelease()
 
 	ModuleReferanceIndex = LUA_NOREF;
 	LuaState.Reset();
-	BindingLuaPath = TEXT("");
 }
 
-bool ILuaImplementableInterface::OnProcessEvent(UFunction* Function, void* Parameters)
+bool ILuaImplementableInterface::OnProcessLuaOverrideEvent(UFunction* Function, void* Parameters)
 {
 	if (!LuaState.IsValid() || ModuleReferanceIndex == LUA_NOREF
 		|| !Function || !Function->HasAnyFunctionFlags(FUNC_BlueprintEvent))
@@ -200,7 +217,7 @@ bool ILuaImplementableInterface::OnProcessEvent(UFunction* Function, void* Param
 		return false;
 	}
 
-	SCOPE_CYCLE_COUNTER(STAT_ProcessLuaObjectOverrideEvent);
+	SCOPE_CYCLE_COUNTER(STAT_ProcessLuaOverrideEvent);
 
 	lua_State* L = LuaState->GetState();
 	FLuaStackGuard Gurad(L);
@@ -211,6 +228,21 @@ bool ILuaImplementableInterface::OnProcessEvent(UFunction* Function, void* Param
 	}
 
 	return LuaState->CallLuaFunction(Function, Parameters);
+}
+
+FString ILuaImplementableInterface::OnInitBindingLuaPath_Implementation()
+{
+	return TEXT("");
+}
+
+bool ILuaImplementableInterface::ShouldEnableLuaBinding_Implementation()
+{
+	return true;
+}
+
+TSharedPtr<FLuaState> ILuaImplementableInterface::OnInitLuaState()
+{
+	return FBlueluaModule::Get().GetDefaultLuaState();
 }
 
 bool ILuaImplementableInterface::InitBPFunctionOverriding()
@@ -265,17 +297,17 @@ bool ILuaImplementableInterface::InitBPFunctionOverriding()
 			{
 				if (!BPFunction)
 				{
-					UE_LOG(LogBluelua, Warning, TEXT("Lua override bp function failed! No bp function named: %s in class: %s"), *TargetBPFunctionName, *Class->GetName());
+					UE_LOG(LogBluelua, Warning, TEXT("Lua override bp function failed! No bp function named: %s in class: %s!"), *TargetBPFunctionName, *Class->GetName());
 				}
 				else
 				{
-					UE_LOG(LogBluelua, Warning, TEXT("Lua override bp function failed! Cann't override a native function: %s in class: %s"), *TargetBPFunctionName, *Class->GetName());
+					UE_LOG(LogBluelua, Warning, TEXT("Lua override bp function failed! Cann't override a native function: %s in class: %s!"), *TargetBPFunctionName, *Class->GetName());
 				}
 			}
 		}
 		else
 		{
-			UE_LOG(LogBluelua, Warning, TEXT("Lua override bp function failed! No lua function named: %s in %s"), *TargetBPFunctionName, *BindingLuaPath);
+			UE_LOG(LogBluelua, Warning, TEXT("Lua override bp function failed! No lua function named: %s!"), *TargetBPFunctionName);
 		}
 
 		lua_pop(L, 1); // stack = [..., key]

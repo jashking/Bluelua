@@ -18,15 +18,12 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void PostInitProperties() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void BeginDestroy() override;
 	virtual void ProcessEvent(UFunction* Function, void* Parameters) override final;
-
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual FString OnInitBindingLuaPath_Implementation() override;
+	virtual bool ShouldEnableLuaBinding_Implementation() override;
 
 protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "LuaImplementable", meta = (AllowPrivateAccess = "true"))

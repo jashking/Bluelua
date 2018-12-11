@@ -2,19 +2,14 @@
 
 #include "LuaImplementableWidget.h"
 
+#include "Misc/Paths.h"
+
 #include "Engine/LatentActionManager.h"
 #include "Engine/World.h"
 
-void ULuaImplementableWidget::PostInitProperties()
-{
-	Super::PostInitProperties();
-
-	PreRegisterLua(LuaFilePath);
-}
-
 void ULuaImplementableWidget::ProcessEvent(UFunction* Function, void* Parameters)
 {
-	if (!OnProcessEvent(Function, Parameters))
+	if (!OnProcessLuaOverrideEvent(Function, Parameters))
 	{
 		Super::ProcessEvent(Function, Parameters);
 	}
@@ -22,7 +17,7 @@ void ULuaImplementableWidget::ProcessEvent(UFunction* Function, void* Parameters
 
 void ULuaImplementableWidget::NativeConstruct()
 {
-	OnInit(LuaFilePath);
+	OnInitLuaBinding();
 
 	Super::NativeConstruct();
 }
@@ -31,7 +26,7 @@ void ULuaImplementableWidget::NativeDestruct()
 {
 	Super::NativeDestruct();
 
-	OnRelease();
+	OnReleaseLuaBinding();
 }
 
 void ULuaImplementableWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -48,7 +43,17 @@ void ULuaImplementableWidget::BeginDestroy()
 {
 	Super::BeginDestroy();
 
-	OnRelease();
+	OnReleaseLuaBinding();
+}
+
+FString ULuaImplementableWidget::OnInitBindingLuaPath_Implementation()
+{
+	return FPaths::ProjectContentDir() / LuaFilePath;
+}
+
+bool ULuaImplementableWidget::ShouldEnableLuaBinding_Implementation()
+{
+	return !LuaFilePath.IsEmpty();
 }
 
 void ULuaImplementableWidget::TickActions(float InDeltaTime)

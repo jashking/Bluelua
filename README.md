@@ -12,39 +12,41 @@
 
     所有可用 lua 子类化的 C++ 类，都需要继承自该接口，并在对应的虚函数里调用相应的接口，主要几种类重载方式如下
 
+    * 所有类(或蓝图)都需要重载两个重要的 `BlueprintNativeEvent`: `ShouldEnableLuaBinding` 和 `OnInitBindingLuaPath`
+        * `ShouldEnableLuaBinding`: 返回是否开启 lua 绑定
+        * `OnInitBindingLuaPath`: 返回绑定的 lua 文件路径
+    
+    * C++ 中可选择性重载 `OnInitLuaState`，返回自定义的 `FLuaState`，默认使用全局的 lua state
+
     * `AActor` 类，参见 [`LuaImplementableActor.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableActor.h)
-        * 在 `PostInitProperties` 虚函数里调用 `PreRegisterLua`
-        * 在 `BeginPlay` 虚函数里调用 `OnInit`
-        * 在 `EndPlay` 和 `BeginDestroy` 虚函数里调用 `OnRelease`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessEvent`
+        * 在 `BeginPlay` 虚函数里调用 `OnInitLuaBinding`
+        * 在 `EndPlay` 和 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
+        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
 
     * `UUserWidget` 类，参见 [`LuaImplementableWidget.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableWidget.h)
-        * 在 `PostInitProperties` 虚函数里调用 `PreRegisterLua`
-        * 在 `NativeConstruct` 虚函数里调用 `OnInit`
-        * 在 `NativeDestruct` 和 `BeginDestroy` 虚函数里调用 `OnRelease`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessEvent`
+        * 在 `NativeConstruct` 虚函数里调用 `OnInitLuaBinding`
+        * 在 `NativeDestruct` 和 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
+        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
 
         Widget 类还有个特殊的地方，该类对象所拥有的 `LatentAction` 不受暂停影响，所以还需要重载 `NativeTick`，在该虚函数里调用 `LatentActionManager` 处理自己拥有的 `LatentAction` 对象
 
     * `UObject` 类，参见 [LuaActionRPG](https://github.com/jashking/LuaActionRPG) 例子中的 [`RPGAnimNotifyState.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGAnimNotifyState.h)
-        * 在 `PostInitProperties` 虚函数里调用 `PreRegisterLua`
-        * 在 `BeginDestroy` 虚函数里调用 `OnRelease`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessEvent`
+        * 在 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
+        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
         * 因为 UObject 类没有一个初始化的虚函数可重载，所以可以在 `ProcessEvent` 第一次被调用时候进行初始化，详情见例子
 
     * `UGameInstance` 类，参见 [LuaActionRPG](https://github.com/jashking/LuaActionRPG) 例子中的 [`RPGGameInstanceBase.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGGameInstanceBase.h)
-        * 在 `PostInitProperties` 虚函数里调用 `PreRegisterLua`
-        * 在 `Init` 虚函数里调用 `OnInit`
-        * 在 `Shutdown` 和 `BeginDestroy` 虚函数里调用 `OnRelease`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessEvent`
+        * 在 `Init` 虚函数里调用 `OnInitLuaBinding`
+        * 在 `Shutdown` 和 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
+        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
 
 * `Super`
 
     用 Lua 去子类化 Widget 或者 Actor 时候，会传入一个临时全局父类对象 Super，需要自己在 lua 里引用住
 
-* `ToLuaObject`
+* `CastToLua`
 
-    获取到一个虚幻对象后，判断该对象是否使用 lua 子类化，可以调用该对象的方法 `ToLuaObject`，如果使用了 lua 子类化则会返回一个 lua table，可以直接调用该 table 中的属性和方法，类似蓝图中将一个 C++ 对象转为蓝图对象，如图所示
+    获取到一个虚幻对象后，判断该对象是否使用 lua 子类化，可以调用该对象的方法 `CastToLua`，如果使用了 lua 子类化则会返回一个 lua table，可以直接调用该 table 中的属性和方法，类似蓝图中将一个 C++ 对象转为蓝图对象，如图所示
 
     ![](Doc/Images/cast.png)
 

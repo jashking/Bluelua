@@ -22,7 +22,7 @@ protected:
 	static int ToString(lua_State* L);
 	static int CallUFunction(lua_State* L);
 	static int GC(lua_State* L);
-	static int ToLuaObject(lua_State* L);
+	static int CastToLua(lua_State* L);
 
 protected:
 	TWeakObjectPtr<UObject> Source;

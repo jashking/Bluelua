@@ -163,9 +163,9 @@ int FLuaUObject::Index(lua_State* L)
 	{
 		return FLuaObjectBase::PushProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(LuaUObject->Source.Get()), LuaUObject->Source.Get(), false);
 	}
-	else if (FCStringAnsi::Strcmp(PropertyName, "ToLuaObject") == 0)
+	else if (FCStringAnsi::Strcmp(PropertyName, "CastToLua") == 0)
 	{
-		lua_pushcfunction(L, ToLuaObject);
+		lua_pushcfunction(L, CastToLua);
 		return 1;
 	}
 
@@ -240,7 +240,7 @@ int FLuaUObject::GC(lua_State* L)
 	return 0;
 }
 
-int FLuaUObject::ToLuaObject(lua_State* L)
+int FLuaUObject::CastToLua(lua_State* L)
 {
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
 	if (!LuaUObject->Source.IsValid())
@@ -248,18 +248,11 @@ int FLuaUObject::ToLuaObject(lua_State* L)
 		return 0;
 	}
 
-	ILuaImplementableInterface* LuaImplementableInterface = Cast<ILuaImplementableInterface>(LuaUObject->Source);
+	ILuaImplementableInterface* LuaImplementableInterface = Cast<ILuaImplementableInterface>(LuaUObject->Source.Get());
 	if (!LuaImplementableInterface)
 	{
 		return 0;
 	}
 
-	if (!LuaImplementableInterface->IsLuaBound())
-	{
-		FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
-
-		LuaImplementableInterface->PreInit(LuaStateWrapper->AsShared());
-	}
-
-	return (LuaImplementableInterface->FetchLuaModule() ? 1 : 0);
+	return (LuaImplementableInterface->CastToLua() ? 1 : 0);
 }

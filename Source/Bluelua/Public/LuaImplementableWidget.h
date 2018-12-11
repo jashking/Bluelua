@@ -16,12 +16,13 @@ class BLUELUA_API ULuaImplementableWidget : public UUserWidget, public ILuaImple
 	GENERATED_BODY()
 
 protected:
-	virtual void PostInitProperties() override;
 	virtual void ProcessEvent(UFunction* Function, void* Parameters) override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual void BeginDestroy() override;
+	virtual FString OnInitBindingLuaPath_Implementation() override;
+	virtual bool ShouldEnableLuaBinding_Implementation() override;
 
 	void TickActions(float InDeltaTime);
 
