@@ -629,7 +629,7 @@ bool FLuaObjectBase::Fetch(lua_State* L, int32 Index, FName& Value)
 	return true;
 }
 
-int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Function)
+int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Function, bool bIsParentDefaultFunction/* = false*/)
 {
 	FStructOnScope FuncParams(Function);
 
@@ -648,7 +648,14 @@ int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Funct
 		}
 	}
 
-	Object->ProcessEvent(Function, FuncParams.GetStructMemory());
+	if (bIsParentDefaultFunction)
+	{
+		Object->UObject::ProcessEvent(Function, FuncParams.GetStructMemory());
+	}
+	else
+	{
+		Object->ProcessEvent(Function, FuncParams.GetStructMemory());
+	}
 
 	int32 ReturnNum = 0;
 	if (ReturnValue)

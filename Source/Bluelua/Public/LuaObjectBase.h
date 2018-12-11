@@ -69,5 +69,5 @@ public:
 	inline static bool Fetch(lua_State* L, int32 Index, FName& Value);
 
 protected:
-	static int CallFunction(lua_State* L, UObject* Object, UFunction* Function);
+	static int CallFunction(lua_State* L, UObject* Object, UFunction* Function, bool bIsParentDefaultFunction = false);
 };

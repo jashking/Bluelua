@@ -144,26 +144,24 @@ int FLuaUObject::Index(lua_State* L)
 		return 0;
 	}
 
-	const char* PropertyName = lua_tostring(L, 2);
+	FString PropertyName = UTF8_TO_TCHAR(lua_tostring(L, 2));
+	const bool bIsParentDefaultFunction = PropertyName.RemoveFromEnd(TEXT("_Default"), ESearchCase::CaseSensitive);
+
 	UClass* Class = LuaUObject->Source->GetClass();
 
-	if (UFunction* Function = Class->FindFunctionByName(PropertyName))
+	if (UFunction* Function = Class->FindFunctionByName(*PropertyName))
 	{
-		if (!Function->HasAnyFunctionFlags(FUNC_BlueprintCallable | FUNC_BlueprintPure))
-		{
-			luaL_error(L, "Function[%s] is not blueprint callable!", TCHAR_TO_UTF8(*Function->GetName()));
-		}
-
+		lua_pushboolean(L, bIsParentDefaultFunction);
 		lua_pushlightuserdata(L, Function);
-		lua_pushcclosure(L, CallUFunction, 1);
+		lua_pushcclosure(L, CallUFunction, 2);
 
 		return 1;
 	}
-	else if (UProperty* Property = Class->FindPropertyByName(PropertyName))
+	else if (UProperty* Property = Class->FindPropertyByName(*PropertyName))
 	{
 		return FLuaObjectBase::PushProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(LuaUObject->Source.Get()), LuaUObject->Source.Get(), false);
 	}
-	else if (FCStringAnsi::Strcmp(PropertyName, "CastToLua") == 0)
+	else if (PropertyName.Equals(TEXT("CastToLua")))
 	{
 		lua_pushcfunction(L, CastToLua);
 		return 1;
@@ -215,14 +213,15 @@ int FLuaUObject::CallUFunction(lua_State* L)
 {
 	SCOPE_CYCLE_COUNTER(STAT_ObjectCallUFunction);
 
-	UFunction* Function = (UFunction*)lua_touserdata(L, lua_upvalueindex(1));
+	const bool bIsParentDefaultFunction = lua_toboolean(L, lua_upvalueindex(1));
+	UFunction* Function = (UFunction*)lua_touserdata(L, lua_upvalueindex(2));
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
 	if (!LuaUObject->Source.IsValid())
 	{
 		return 0;
 	}
 
-	return FLuaObjectBase::CallFunction(L, LuaUObject->Source.Get(), Function);
+	return FLuaObjectBase::CallFunction(L, LuaUObject->Source.Get(), Function, bIsParentDefaultFunction);
 }
 
 int FLuaUObject::GC(lua_State* L)
