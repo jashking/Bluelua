@@ -465,12 +465,17 @@ int FLuaState::LuaLoadClass(lua_State* L)
 		UClass* Class = FindObject<UClass>(ANY_PACKAGE, *ClassPath);
 		if (!Class)
 		{
-			FString ObjectPath = ClassPath;
+			UObject* Result = LoadClass<UObject>(nullptr, *ClassPath);
+			Class = Cast<UClass>(Result);
+			if (!Class)
+			{
+				FString ObjectPath = ClassPath;
 
-			ObjectPath.RemoveFromEnd(TEXT("_C"), ESearchCase::CaseSensitive);
-			LoadObject<UObject>(nullptr, *ObjectPath);
+				ObjectPath.RemoveFromEnd(TEXT("_C"), ESearchCase::CaseSensitive);
+				LoadObject<UObject>(nullptr, *ObjectPath);
 
-			Class = FindObject<UClass>(ANY_PACKAGE, *ClassPath);
+				Class = FindObject<UClass>(ANY_PACKAGE, *ClassPath);
+			}
 		}
 
 		if (Class)
