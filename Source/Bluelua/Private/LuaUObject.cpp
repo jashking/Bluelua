@@ -2,6 +2,7 @@
 
 #include "Blueprint/WidgetTree.h"
 #include "UObject/Class.h"
+#include "UObject/Package.h"
 #include "UObject/StructOnScope.h"
 #include "UObject/UnrealType.h"
 
@@ -100,10 +101,6 @@ UObject* FLuaUObject::Fetch(lua_State* L, int32 Index)
 int FLuaUObject::LuaLoadObject(lua_State* L)
 {
 	UObject* Owner = FLuaUObject::Fetch(L, 1);
-	if (!Owner)
-	{
-		return 0;
-	}
 
 	const char* ObjectPath = lua_tostring(L, 2);
 	if (!ObjectPath)
@@ -111,7 +108,7 @@ int FLuaUObject::LuaLoadObject(lua_State* L)
 		return 0;
 	}
 
-	UObject* Object = LoadObject<UObject>(Owner, UTF8_TO_TCHAR(ObjectPath));
+	UObject* Object = LoadObject<UObject>(Owner ? Owner : Cast<UObject>(GetTransientPackage()), UTF8_TO_TCHAR(ObjectPath));
 
 	return FLuaUObject::Push(L, Object, Owner);
 }
@@ -164,6 +161,11 @@ int FLuaUObject::Index(lua_State* L)
 	else if (PropertyName.Equals(TEXT("CastToLua")))
 	{
 		lua_pushcfunction(L, CastToLua);
+		return 1;
+	}
+	else if (PropertyName.Equals(TEXT("IsValid")))
+	{
+		lua_pushcfunction(L, IsValid);
 		return 1;
 	}
 
@@ -254,4 +256,13 @@ int FLuaUObject::CastToLua(lua_State* L)
 	}
 
 	return (LuaImplementableInterface->CastToLua() ? 1 : 0);
+}
+
+int FLuaUObject::IsValid(lua_State* L)
+{
+	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
+
+	lua_pushboolean(L, LuaUObject->Source.IsValid());
+
+	return 1;
 }
