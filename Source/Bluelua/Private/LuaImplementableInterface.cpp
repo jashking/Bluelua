@@ -1,5 +1,6 @@
 #include "LuaImplementableInterface.h"
 
+#include "Misc/Paths.h"
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 
@@ -149,6 +150,12 @@ bool ILuaImplementableInterface::OnInitLuaBinding()
 	{
 		UE_LOG(LogBluelua, Warning, TEXT("Init lua binding in object[%s] failed! Lua file path is empty! "), *ThisObject->GetName());
 		return false;
+	}
+
+	// if .luac exist, use precompiled lua file
+	if (FPaths::FileExists(OnInitBindingLuaPath_Parms.ReturnValue + TEXT("c")))
+	{
+		OnInitBindingLuaPath_Parms.ReturnValue = OnInitBindingLuaPath_Parms.ReturnValue + TEXT("c");
 	}
 
 	LuaState = OnInitLuaState();
