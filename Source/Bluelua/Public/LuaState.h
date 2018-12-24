@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "UObject/GCObject.h"
+#include "UObject/WeakObjectPtr.h"
+#include "UObject/WeakObjectPtrTemplates.h"
 
 struct lua_State;
 class ULuaDelegateCaller;
