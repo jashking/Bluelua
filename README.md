@@ -4,7 +4,7 @@ Replace the blueprint with Lua, keep it in a consistent way with the blueprint, 
 
 ## How to use ##
 
-Clone Bluelua to your project's *Plugins* folder, regenate project solution and build.
+Clone Bluelua to your project's *Plugins* folder, regenerate project solution and build.
 
 ### How to inherit C++ with lua ###
 
@@ -76,3 +76,7 @@ Clone Bluelua to your project's *Plugins* folder, regenate project solution and 
 ## TODO ##
 
 * hot reload lua
+
+## 中文版使用介绍 ##
+
+[使用介绍](https://github.com/jashking/Bluelua/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8)
