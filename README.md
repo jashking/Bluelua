@@ -1,58 +1,57 @@
 # Bluelua for UE4 #
 
-用 Lua 替换蓝图脚本，保持和蓝图一致的使用方式，无缝切换。Lua 中使用反射去访问虚幻对象的属性和方法，无需生成胶水代码，更加简洁易扩展，对于经常访问的方法可以在 lua 中进行 cache，减少反射访问成本。
+Replace the blueprint with Lua, keep it in a consistent way with the blueprint, and switch seamlessly. Accessing UObject's properties and methods with reflection and without the need to generate glue code, more simple and easy to expand.
 
-## 使用 ##
+## How to use ##
 
-复制到项目 *Plugins* 目录下即可
+Clone Bluelua to your project's *Plugins* folder, regenate project solution and build.
 
-### 使用约定 ###
+### How to inherit C++ with lua ###
 
 * `ILuaImplementableInterface`
 
-    所有可用 lua 子类化的 C++ 类，都需要继承自该接口，并在对应的虚函数里调用相应的接口，主要几种类重载方式如下
+    All C++ classes that can be used with LUA subclasses need to be inherited from this interface and the corresponding methods are called in the corresponding virtual functions, the main types of overrideing are as follows:
 
-    * 所有类(或蓝图)都需要重载两个重要的 `BlueprintNativeEvent`: `ShouldEnableLuaBinding` 和 `OnInitBindingLuaPath`
-        * `ShouldEnableLuaBinding`: 返回是否开启 lua 绑定
-        * `OnInitBindingLuaPath`: 返回绑定的 lua 文件路径
+    All C++ classes (or blueprint classes) need to override two important `BlueprintNativeEvent`: `ShouldEnableLuaBinding`: should use lua subclass on this C++/Blueprint class. `OnInitBindingLuaPath`: return corresponding lua file path
     
-    * C++ 中可选择性重载 `OnInitLuaState`，返回自定义的 `FLuaState`，默认使用全局的 lua state
+    It's optional to override `OnInitLuaState`: return custom FLuaState wrapper, default use of global lua state
 
-    * `AActor` 类，参见 [`LuaImplementableActor.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableActor.h)
-        * 在 `BeginPlay` 虚函数里调用 `OnInitLuaBinding`
-        * 在 `EndPlay` 和 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
+    * Class `AActor`, see [`LuaImplementableActor.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableActor.h)
+        * Call `OnInitLuaBinding` in `BeginPlay`
+        * Call `OnReleaseLuaBinding` in `EndPlay`
+        * Call `OnProcessLuaOverrideEvent` in `ProcessEvent`
 
-    * `UUserWidget` 类，参见 [`LuaImplementableWidget.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableWidget.h)
-        * 在 `NativeConstruct` 虚函数里调用 `OnInitLuaBinding`
-        * 在 `NativeDestruct` 和 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
+    * Class `UUserWidget`, see [`LuaImplementableWidget.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableWidget.h)
+        * Call `OnInitLuaBinding` in `NativeConstruct`
+        * Call `OnReleaseLuaBinding` in `NativeDestruct`
+        * Call `OnProcessLuaOverrideEvent` in `ProcessEvent`
 
-        Widget 类还有个特殊的地方，该类对象所拥有的 `LatentAction` 不受暂停影响，所以还需要重载 `NativeTick`，在该虚函数里调用 `LatentActionManager` 处理自己拥有的 `LatentAction` 对象
+        The UUserWidget class also has a special place where the `LatentAction` owned by the class is not affected by the pause, so you also need to override `NativeTick` and call `LatentActionManager` in the virtual function to handle all `LatentAction` objects. See `TickActions` in [`LuaImplementableWidget.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableWidget.h)
 
-    * `UObject` 类，参见 [LuaActionRPG](https://github.com/jashking/LuaActionRPG) 例子中的 [`RPGAnimNotifyState.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGAnimNotifyState.h)
-        * 在 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
-        * 因为 UObject 类没有一个初始化的虚函数可重载，所以可以在 `ProcessEvent` 第一次被调用时候进行初始化，详情见例子
+    * Class `UObject`, see [`RPGAnimNotifyState.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGAnimNotifyState.h) in [Demo LuaActionRPG](https://github.com/jashking/LuaActionRPG)
+        * Call `OnReleaseLuaBinding` in `BeginDestroy`
+        * Call `OnProcessLuaOverrideEvent` in `ProcessEvent`
+        * Because the Uobject class does not have an initialized virtual function that can be overrided, so it can call `OnInitLuaBinding` the first time the `ProcessEvent` is called, as shown in the demo
 
-    * `UGameInstance` 类，参见 [LuaActionRPG](https://github.com/jashking/LuaActionRPG) 例子中的 [`RPGGameInstanceBase.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGGameInstanceBase.h)
-        * 在 `Init` 虚函数里调用 `OnInitLuaBinding`
-        * 在 `Shutdown` 和 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
+    * Class `UGameInstance`, see [`RPGGameInstanceBase.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGGameInstanceBase.h) in [Demo LuaActionRPG](https://github.com/jashking/LuaActionRPG)
+        * Call `OnInitLuaBinding` in `Init`
+        * Call `OnReleaseLuaBinding` in `Shutdown`
+        * Call `OnProcessLuaOverrideEvent` in `ProcessEvent`
 
-* `Super`
+* keyword `Super`
 
-    用 Lua 去子类化 Widget 或者 Actor 时候，会传入一个临时全局父类对象 Super，需要自己在 lua 里引用住
+    When you use Lua to subclass c++ classes or blueprints, there is a temporary global object called Super represent the parent UObject that you can access it's properties and methods. It's only avaliable when lua file is loaded(`luaL_loadbuffer`), so you need to cache it's reference in your lua file like `local MyParent = Super` and use `MyParent` in your lua
 
 * `CastToLua`
 
-    获取到一个虚幻对象后，判断该对象是否使用 lua 子类化，可以调用该对象的方法 `CastToLua`，如果使用了 lua 子类化则会返回一个 lua table，可以直接调用该 table 中的属性和方法，类似蓝图中将一个 C++ 对象转为蓝图对象，如图所示
+    When you have a UObject in lua and want to know if the object has a lua subclass, you can call `CastToLua` on that object like `local LuaObject = OtherObject:CastToLua()`, it returns a lua table represent the lua object if `OtherObject` has a lua subclass. `CastToLua` works like cast in blueprint:
 
     ![](Doc/Images/cast.png)
 
-* `Lua` 的模块化书写
+* Modular lua subcalss
 
-    编写 lua 代码去子类化 C++ 或蓝图类时，必须采用模块化的写法，并且所有方法都采用 **:** 的声明形式，如下所示
+    All lua subclass should implement in modular table and methods should declare with **:** not **.**, see see [`GameInstance.lua`](https://github.com/jashking/LuaActionRPG/blob/master/Content/Lua/Blueprints/GameInstance.lua) in [Demo LuaActionRPG](https://github.com/jashking/LuaActionRPG)
+
     ``` lua
     local m = {}
 
@@ -62,16 +61,17 @@
     return m
     ```
 
-* `Lua` 实现蓝图中的继承逻辑
+* inheritance in lua
 
-    用蓝图编写逻辑时候，也可以类似 C++ 那样进行继承，在 Lua 中也可以利用元表实现 lua 对象间的继承，可以参见 [LuaActionRPG](https://github.com/jashking/LuaActionRPG) 中 [PlayerCharacter.lua](https://github.com/jashking/LuaActionRPG/blob/master/Content/Lua/Blueprints/PlayerCharacter.lua) 和 [Character.lua](https://github.com/jashking/LuaActionRPG/blob/master/Content/Lua/Blueprints/Character.lua)
+    You can use lua metatable to implement inheritance like you do in C++ or blueprint, see
+    [PlayerCharacter.lua](https://github.com/jashking/LuaActionRPG/blob/master/Content/Lua/Blueprints/PlayerCharacter.lua) and [Character.lua](https://github.com/jashking/LuaActionRPG/blob/master/Content/Lua/Blueprints/Character.lua) in [Demo LuaActionRPG](https://github.com/jashking/LuaActionRPG)
 
-* `Lua` 中重载 `BlueprintImplementableEvent` 和 `BlueprintNativeEvent` 方法时要注意，方法名要完全一致，比如 `BeginPlay` 事件，可重载的方法名其实叫 `ReceiveBeginPlay`。Lua 调用成员方法时也需要注意方法的命名问题，因为有时候在蓝图中看到的方法名称其实是个别名
+* When a UFUNCTION expose to blueprint, it can has a alias, like `BeginPlay` in blueprint, it actually called `ReceiveBeginPlay`. so when you override this function in lua you should use `ReceiveBeginPlay` not `BeginPlay`.
 
 ## Samples ##
 
-* [BlueluaDemo](https://github.com/jashking/BlueluaDemo): 性能对比测试和简单用法
-* [LuaActionRPG](https://github.com/jashking/LuaActionRPG): 官方的 ActionRPG 示例，将蓝图逻辑替换为 lua 逻辑，尚未完全替换完
+* [LuaActionRPG](https://github.com/jashking/LuaActionRPG): Epic's ActionRPG demo in lua implementation, still work in progress
+* [BlueluaDemo](https://github.com/jashking/BlueluaDemo): benchmark and test
 
 ## TODO ##
 
