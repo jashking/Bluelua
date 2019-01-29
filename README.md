@@ -2,6 +2,8 @@
 
 Replace the blueprint with Lua, keep it in a consistent way with the blueprint, and switch seamlessly. Accessing UObject's properties and methods with reflection and without the need to generate glue code, more simple and easy to expand.
 
+Android, iOS, Mac, Windows, Linux are supported now.
+
 ## How to use ##
 
 Clone Bluelua to your project's *Plugins* folder, regenerate project solution and build.
