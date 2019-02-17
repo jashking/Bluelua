@@ -1,3 +1,4 @@
+R"[========](
 -----------------------------------------------------------------------------
 -- Unified SMTP/FTP subsystem
 -- LuaSocket toolkit.
@@ -132,3 +133,4 @@ function _M.connect(host, port, timeout, create)
 end
 
 return _M
+)[========]";

@@ -1,3 +1,4 @@
+R"[========](
 -----------------------------------------------------------------------------
 -- LuaSocket helper module
 -- Author: Diego Nehab
@@ -147,3 +148,4 @@ sourcet["default"] = sourcet["until-closed"]
 _M.source = _M.choose(sourcet)
 
 return _M
+)[========]";

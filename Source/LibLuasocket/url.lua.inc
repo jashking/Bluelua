@@ -1,3 +1,4 @@
+R"[========](
 -----------------------------------------------------------------------------
 -- URI parsing, composition and relative URL resolution
 -- LuaSocket toolkit.
@@ -329,3 +330,4 @@ function _M.build_path(parsed, unsafe)
 end
 
 return _M
+)[========]";

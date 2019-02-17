@@ -1,3 +1,4 @@
+R"[========](
 local _M = {}
 
 if module then
@@ -90,3 +91,4 @@ function _M.parse_message(message_s)
 end
 
 return _M
+)[========]";
