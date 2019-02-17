@@ -29,6 +29,11 @@
 			"Name": "Liblua",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "LibLuasocket",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	]
 }

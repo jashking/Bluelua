@@ -39,6 +39,7 @@ public class Bluelua : ModuleRules
 				"UMG",
 				// ... add private dependencies that you statically link with here ...	
 				"Liblua",
+				"LibLuasocket",
 			}
 		);
 		

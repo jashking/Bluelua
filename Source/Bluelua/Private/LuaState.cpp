@@ -10,6 +10,7 @@
 #include "UObject/UObjectGlobals.h"
 
 #include "Bluelua.h"
+#include "LibLuasocket.h"
 #include "lua.hpp"
 #include "LuaDelegateCaller.h"
 #include "LuaObjectBase.h"
@@ -91,6 +92,11 @@ FLuaState::FLuaState()
 		lua_setfield(L, -2, "__mode");
 		lua_setmetatable(L, -2);
 		CacheObjectRefIndex = luaL_ref(L, LUA_REGISTRYINDEX);
+
+		if (FLibLuasocketModule::IsAvailable())
+		{
+			FLibLuasocketModule::Get().SetupLuasocket(L);
+		}
 
 		UE_LOG(LogBluelua, Display, TEXT("Lua state created. LuaState[0x%x], L[0x%x]."), this, L);
 	}
