@@ -40,6 +40,7 @@ public class Bluelua : ModuleRules
 				// ... add private dependencies that you statically link with here ...	
 				"Liblua",
 				"LibLuasocket",
+				"LuaPanda",
 			}
 		);
 		

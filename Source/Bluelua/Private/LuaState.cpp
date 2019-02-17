@@ -11,6 +11,7 @@
 
 #include "Bluelua.h"
 #include "LibLuasocket.h"
+#include "LuaPanda.h"
 #include "lua.hpp"
 #include "LuaDelegateCaller.h"
 #include "LuaObjectBase.h"
@@ -96,6 +97,11 @@ FLuaState::FLuaState()
 		if (FLibLuasocketModule::IsAvailable())
 		{
 			FLibLuasocketModule::Get().SetupLuasocket(L);
+
+			if (FLuaPanda::IsAvailable())
+			{
+				FLuaPanda::Get().SetupLuaPanda(L);
+			}
 		}
 
 		UE_LOG(LogBluelua, Display, TEXT("Lua state created. LuaState[0x%x], L[0x%x]."), this, L);
