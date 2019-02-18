@@ -42,6 +42,7 @@ FLuaState::FLuaState()
 		static const luaL_Reg LoadedLibs[] = {
 			{ "_G", luaopen_base },
 			{ LUA_LOADLIBNAME, luaopen_package },
+			{ LUA_COLIBNAME, luaopen_coroutine },
 			{ LUA_TABLIBNAME, luaopen_table },
 			{ LUA_OSLIBNAME, luaopen_os },
 			{ LUA_STRLIBNAME, luaopen_string },
@@ -50,7 +51,7 @@ FLuaState::FLuaState()
 			{ LUA_DBLIBNAME, luaopen_debug },
 			{ NULL, NULL }
 		};
-
+		
 		for (const luaL_Reg* Lib = LoadedLibs; Lib->func; ++Lib)
 		{
 			luaL_requiref(L, Lib->name, Lib->func, 1);
@@ -446,7 +447,7 @@ int FLuaState::LuaSearcher(lua_State* L)
 	}
 	else
 	{
-		UE_LOG(LogBluelua, Warning, TEXT("Lua require failed! File[%s] not exists!"), *FileName);
+		//UE_LOG(LogBluelua, Warning, TEXT("Lua require failed! File[%s] not exists!"), *FileName);
 		return 0;
 	}
 
