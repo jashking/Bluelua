@@ -43,6 +43,7 @@ FLuaState::FLuaState()
 			{ "_G", luaopen_base },
 			{ LUA_LOADLIBNAME, luaopen_package },
 			{ LUA_TABLIBNAME, luaopen_table },
+			{ LUA_OSLIBNAME, luaopen_os },
 			{ LUA_STRLIBNAME, luaopen_string },
 			{ LUA_MATHLIBNAME, luaopen_math },
 			{ LUA_UTF8LIBNAME, luaopen_utf8 },
@@ -97,12 +98,31 @@ FLuaState::FLuaState()
 		if (FLibLuasocketModule::IsAvailable())
 		{
 			FLibLuasocketModule::Get().SetupLuasocket(L);
+			lua_pushboolean(L, true);
+			lua_setglobal(L, "SupportLuasocket");
 
-			if (FLuaPanda::IsAvailable())
+			UE_LOG(LogBluelua, Display, TEXT("Lua state setup with Luasocket."));
+
+			if (UE_BUILD_SHIPPING == 0 && FLuaPanda::IsAvailable())
 			{
 				FLuaPanda::Get().SetupLuaPanda(L);
+				lua_pushboolean(L, true);
+				lua_setglobal(L, "SupportLuaPanda");
+				UE_LOG(LogBluelua, Display, TEXT("Lua state setup with LuaPanda."));
 			}
 		}
+
+		lua_pushboolean(L, !!UE_BUILD_SHIPPING);
+		lua_setglobal(L, "BuildShipping");
+
+		lua_pushboolean(L, !!UE_BUILD_TEST);
+		lua_setglobal(L, "BuildTest");
+
+		lua_pushboolean(L, !!UE_BUILD_DEVELOPMENT);
+		lua_setglobal(L, "BuildDevelopment");
+
+		lua_pushboolean(L, !!UE_BUILD_DEBUG);
+		lua_setglobal(L, "BuildDebug");
 
 		UE_LOG(LogBluelua, Display, TEXT("Lua state created. LuaState[0x%x], L[0x%x]."), this, L);
 	}
