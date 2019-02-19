@@ -2,8 +2,6 @@
 
 #include "LuaPanda.h"
 
-#include <string>
-
 #include "lua.hpp"
 #include "libpdebug.h"
 
@@ -36,22 +34,29 @@ void FLuaPanda::SetupLuaPanda(struct lua_State* L)
 
 int FLuaPanda::OpenLuaPanda(lua_State* L)
 {
-	static std::string RawLua =
+	static const auto RawLua1 =
 #include "LuaPanda.1.lua.inc"
 
-	RawLua +=
+	static const auto RawLua2 =
 #include "LuaPanda.2.lua.inc"
 
-	RawLua +=
+	static const auto RawLua3 =
 #include "LuaPanda.3.lua.inc"
 
-	RawLua +=
+	static const auto RawLua4 =
 #include "LuaPanda.4.lua.inc"
 
-	RawLua +=
+	static const auto RawLua5 =
 #include "LuaPanda.5.lua.inc"
 
-	luaL_dostring(L, RawLua.c_str());
+	static const int32 ContentSize = 100 * 1024;
+	static ANSICHAR LuaContent[ContentSize] = { 0 };
+	if (LuaContent[0] == 0)
+	{
+		FCStringAnsi::Snprintf(LuaContent, ContentSize, "%s%s%s%s%s", RawLua1, RawLua2, RawLua3, RawLua4, RawLua5);
+	}
+
+	luaL_dostring(L, LuaContent);
 	return 1;
 }
 
