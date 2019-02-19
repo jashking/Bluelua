@@ -16,5 +16,6 @@ public class LuaPanda : ModuleRules
 		bEnableUndefinedIdentifierWarnings = false;
 
 		PublicDefinitions.Add("WITH_LUAPANDA=1");
+		PrivateDefinitions.Add("USE_SOURCE_CODE");
 	}
 }

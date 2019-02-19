@@ -2,9 +2,10 @@
 
 #include "LuaPanda.h"
 
-#include "lua.hpp"
-
 #include <string>
+
+#include "lua.hpp"
+#include "libpdebug.h"
 
 IMPLEMENT_MODULE(FLuaPanda, LuaPanda);
 
@@ -20,6 +21,8 @@ void FLuaPanda::ShutdownModule()
 
 void FLuaPanda::SetupLuaPanda(struct lua_State* L)
 {
+	pdebug_init(L);
+
 	luaL_getsubtable(L, LUA_REGISTRYINDEX, LUA_PRELOAD_TABLE);
 
 	lua_pushcfunction(L, &FLuaPanda::OpenLuaPanda);
