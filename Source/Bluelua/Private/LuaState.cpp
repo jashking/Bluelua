@@ -1,7 +1,6 @@
 #include "LuaState.h"
 
 #include "GenericPlatform/GenericPlatformMemory.h"
-#include "HAL/FileManager.h"
 #include "HAL/UnrealMemory.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -212,7 +211,7 @@ bool FLuaState::DoFile(const FString& FilePath)
 		return false;
 	}
 
-	return DoBuffer(FileContent.GetData(), FileContent.Num(), TCHAR_TO_UTF8(*FString::Printf(TEXT("@%s"), *IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*FilePath))));
+	return DoBuffer(FileContent.GetData(), FileContent.Num(), TCHAR_TO_UTF8(*FString::Printf(TEXT("@%s"), *MakeRelativePathToContent(FilePath))));
 }
 
 bool FLuaState::CallLuaFunction(UFunction* SignatureFunction, void* Parameters, bool bWithSelf/* = true*/)
@@ -458,7 +457,7 @@ int FLuaState::LuaSearcher(lua_State* L)
 		return 0;
 	}
 	
-	if (LUA_OK != luaL_loadbuffer(L, (const char *)FileContent.GetData(), FileContent.Num(), TCHAR_TO_UTF8(*FString::Printf(TEXT("@%s"), *IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*FullFilePath)))))
+	if (LUA_OK != luaL_loadbuffer(L, (const char *)FileContent.GetData(), FileContent.Num(), TCHAR_TO_UTF8(*FString::Printf(TEXT("@%s"), *MakeRelativePathToContent(FullFilePath)))))
 	{
 		const char* ErrorInfo = lua_tostring(L, -1);
 		UE_LOG(LogBluelua, Error, TEXT("Lua require failed! Lua load buffer failed! %s"), UTF8_TO_TCHAR(ErrorInfo));
@@ -628,4 +627,13 @@ void FLuaState::OnPostGarbageCollect()
 	{
 		RemoveReference(Object, nullptr);
 	}
+}
+
+FString FLuaState::MakeRelativePathToContent(const FString& InPath)
+{
+	// TODO: Find a better way to solve LuaPanda debug path problem
+	const FString FullPath = FPaths::ConvertRelativePathToFull(InPath);
+	const int32 ContentIndex = FullPath.Find(TEXT("Content"), ESearchCase::CaseSensitive);
+
+	return (ContentIndex != INDEX_NONE) ? FullPath.RightChop(ContentIndex).Replace(TEXT("Content"), TEXT("."), ESearchCase::CaseSensitive) : FullPath;
 }

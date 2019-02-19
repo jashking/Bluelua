@@ -51,6 +51,8 @@ protected:
 
 	void OnPostGarbageCollect();
 
+	static FString MakeRelativePathToContent(const FString& InPath);
+
 protected:
 	lua_State* L;
 
