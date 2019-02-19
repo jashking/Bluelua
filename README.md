@@ -4,6 +4,12 @@ Replace the blueprint with Lua, keep it in a consistent way with the blueprint, 
 
 Android, iOS, Mac, Windows, Linux are supported now.
 
+## Used Open Source Libraries ##
+
+* [lua](https://www.lua.org/) : Lua is a powerful, efficient, lightweight, embeddable scripting language
+* [luasocket](https://github.com/diegonehab/luasocket) : Network support for the Lua language
+* [Tencent LuaPanda](https://github.com/Tencent/LuaPanda) : Pandora Lua Debugger for VS Code
+
 ## How to use ##
 
 Clone Bluelua to your project's *Plugins* folder, regenerate project solution and build.
