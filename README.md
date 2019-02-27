@@ -83,6 +83,7 @@ Clone Bluelua to your project's *Plugins* folder, regenerate project solution an
 
 ## TODO ##
 
+* expose lua file reader to project, do not assume lua files under ProjectContent folder
 * hot reload lua
 
 ## 中文版使用介绍 ##
