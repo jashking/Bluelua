@@ -82,7 +82,7 @@ bool FLuaUDelegate::Fetch(lua_State* L, int32 Index, UFunction* InFunction, FScr
 	ULuaDelegateCaller* LuaDelegateCaller = Cast<ULuaDelegateCaller>(UserData);
 	if (!LuaDelegateCaller)
 	{
-		luaL_error(L, "Param %d is not a ULuaDelegateCaller", Index);
+		luaL_error(L, "Param %d is not a ULuaDelegateCaller!", Index);
 	}
 
 	LuaDelegateCaller->BindSignatureFunction(InFunction);
@@ -132,7 +132,7 @@ int FLuaUDelegate::DeleteDelegate(lua_State* L)
 	ULuaDelegateCaller* LuaDelegateCaller = Cast<ULuaDelegateCaller>(UserData);
 	if (!LuaDelegateCaller)
 	{
-		luaL_error(L, "Param %d is not a ULuaDelegateCaller", Index);
+		luaL_error(L, "Param 1 is not a ULuaDelegateCaller!");
 	}
 
 	if (!LuaDelegateCaller->IsValidLowLevel())
@@ -157,7 +157,7 @@ int FLuaUDelegate::CreateLatentAction(lua_State* L)
 	ULuaDelegateCaller* LuaDelegateCaller = Cast<ULuaDelegateCaller>(UserData);
 	if (!LuaDelegateCaller)
 	{
-		luaL_error(L, "Param %d is not a ULuaDelegateCaller", Index);
+		luaL_error(L, "Param 1 is not a ULuaDelegateCaller!");
 	}
 
 	FGuid Guid = FGuid::NewGuid();
