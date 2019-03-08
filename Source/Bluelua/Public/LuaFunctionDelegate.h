@@ -2,12 +2,13 @@
 
 #include "CoreMinimal.h"
 
-#include "LuaDelegateCaller.generated.h"
+#include "LuaFunctionDelegate.generated.h"
 
 class FLuaState;
+struct lua_State;
 
 UCLASS()
-class BLUELUA_API ULuaDelegateCaller : public UObject
+class BLUELUA_API ULuaFunctionDelegate : public UObject
 {
 	GENERATED_BODY()
 
@@ -15,13 +16,17 @@ public:
 	virtual void ProcessEvent(UFunction* Function, void* Parameters) override;
 	virtual void BeginDestroy() override;
 
-	static ULuaDelegateCaller* CreateDelegate(UObject* InDelegateOwner, TSharedPtr<FLuaState> InLuaState, UFunction* InSignatureFunction, int InLuaFunctionIndex);
+	static ULuaFunctionDelegate* Create(UObject* InDelegateOwner, TSharedPtr<FLuaState> InLuaState, UFunction* InSignatureFunction, int InLuaFunctionIndex);
+	static ULuaFunctionDelegate* Fetch(lua_State* L, int32 Index);
 
 	void BindLuaState(TSharedPtr<FLuaState> InLuaState);
 	void BindLuaFunction(UFunction* InSignatureFunction, int InLuaFunctionIndex);
 	void BindLuaFunctionOwner(int InLuaFunctionOwerIndex);
 	void BindSignatureFunction(UFunction* InSignatureFunction);
-	void ReleaseLuaFunction();
+	bool IsBound() const;
+
+	UFUNCTION(BlueprintCallable)
+	void Clear();
 
 	UFUNCTION()
 	void NeverUsed() {}

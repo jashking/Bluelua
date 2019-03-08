@@ -244,14 +244,14 @@ int FLuaObjectBase::PushMulticastDelegateProperty(lua_State* L, UProperty* Prope
 {
 	auto DelegateProperty = Cast<UMulticastDelegateProperty>(Property);
 
-	return FLuaUDelegate::Push(L, Object, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, true);
+	return FLuaUDelegate::Push(L, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, true);
 }
 
 int FLuaObjectBase::PushDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	auto DelegateProperty = Cast<UDelegateProperty>(Property);
 
-	return FLuaUDelegate::Push(L, Object, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, false);
+	return FLuaUDelegate::Push(L, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, false);
 }
 
 int FLuaObjectBase::Push(lua_State* L, int8 Value)

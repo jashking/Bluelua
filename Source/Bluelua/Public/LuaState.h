@@ -6,7 +6,6 @@
 #include "UObject/WeakObjectPtrTemplates.h"
 
 struct lua_State;
-class ULuaDelegateCaller;
 
 class BLUELUA_API FLuaState : public FGCObject, public TSharedFromThis<FLuaState>
 {

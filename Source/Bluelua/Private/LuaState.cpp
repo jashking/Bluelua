@@ -12,7 +12,7 @@
 #include "LibLuasocket.h"
 #include "LuaPanda.h"
 #include "lua.hpp"
-#include "LuaDelegateCaller.h"
+#include "LuaFunctionDelegate.h"
 #include "LuaObjectBase.h"
 #include "LuaStackGuard.h"
 #include "LuaUClass.h"
@@ -80,8 +80,7 @@ FLuaState::FLuaState()
 		lua_register(L, "LoadClass", LuaLoadClass);
 		lua_register(L, "LoadStruct", LuaLoadStruct);
 		lua_register(L, "GetEnum", GetEnumValue);
-		lua_register(L, "CreateDelegate", &FLuaUDelegate::CreateDelegate);
-		lua_register(L, "DeleteDelegate", &FLuaUDelegate::DeleteDelegate);
+		lua_register(L, "CreateFunctionDelegate", &FLuaUDelegate::CreateFunctionDelegate);
 		lua_register(L, "CreateLatentAction", &FLuaUDelegate::CreateLatentAction);
 
 		// bind this to L
@@ -330,10 +329,10 @@ void FLuaState::AddReference(UObject* Object, UObject* Owner)
 
 void FLuaState::RemoveReference(UObject* Object, UObject* Owner)
 {
-	ULuaDelegateCaller* Delegate = Cast<ULuaDelegateCaller>(Object);
-	if (Delegate)
+	ULuaFunctionDelegate* DelegateFunction = Cast<ULuaFunctionDelegate>(Object);
+	if (DelegateFunction)
 	{
-		Delegate->ReleaseLuaFunction();
+		DelegateFunction->Clear();
 	}
 
 	ReferencedObjectsWithOwner.Remove(Object);

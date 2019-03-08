@@ -60,13 +60,13 @@ void ULuaImplementableWidget::TickActions(float InDeltaTime)
 {
 	if (LuaState.IsValid())
 	{
-		TSet<UObject*> SubDelegateCallers;
-		LuaState->GetObjectsByOwner(this, SubDelegateCallers);
+		TSet<UObject*> ChildObjects;
+		LuaState->GetObjectsByOwner(this, ChildObjects);
 
 		UWorld* World = GetWorld();
 		if (World)
 		{
-			for (const auto& Object : SubDelegateCallers)
+			for (const auto& Object : ChildObjects)
 			{
 				// Update any latent actions we have for this actor
 				World->GetLatentActionManager().ProcessLatentActions(Object, InDeltaTime);
