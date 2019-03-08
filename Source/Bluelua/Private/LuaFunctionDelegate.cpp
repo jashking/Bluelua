@@ -21,7 +21,7 @@ void ULuaFunctionDelegate::ProcessEvent(UFunction* Function, void* Parameters)
 	{
 		if (!IsBound())
 		{
-			UE_LOG(LogBluelua, Warning, TEXT("Call lua delegate failed! Lua function is not bound! SignatureFunction[%s], FunctionDelegate[%s], Owner[%s]."), SignatureFunction ? *SignatureFunction->GetName() : TEXT("void"), *GetName(), *GetOuter()->GetName());
+			UE_LOG(LogBluelua, Warning, TEXT("Call lua delegate failed! Lua function is not bound! SignatureFunction[%s], FunctionDelegate[%s], Owner[%s]."), *LastSignatureFunctionName, *GetName(), *GetOuter()->GetName());
 			return;
 		}
 
@@ -107,6 +107,7 @@ void ULuaFunctionDelegate::BindLuaFunction(UFunction* InSignatureFunction, int I
 {
 	Clear();
 
+	LastSignatureFunctionName = InSignatureFunction ? InSignatureFunction->GetName() : TEXT("");
 	SignatureFunction = InSignatureFunction;
 	LuaFunctionIndex = InLuaFunctionIndex;
 }
@@ -118,6 +119,7 @@ void ULuaFunctionDelegate::BindLuaFunctionOwner(int InLuaFunctionOwerIndex)
 
 void ULuaFunctionDelegate::BindSignatureFunction(UFunction* InSignatureFunction)
 {
+	LastSignatureFunctionName = InSignatureFunction ? InSignatureFunction->GetName() : TEXT("");
 	SignatureFunction = InSignatureFunction;
 }
 

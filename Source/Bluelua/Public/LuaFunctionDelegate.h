@@ -36,6 +36,7 @@ public:
 protected:
 	TWeakPtr<FLuaState> LuaState;
 
+	FString LastSignatureFunctionName;
 	UFunction* SignatureFunction = nullptr;
 	int LuaFunctionIndex = -2;
 	int LuaFunctionOwnerIndex = -2;
