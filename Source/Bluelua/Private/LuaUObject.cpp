@@ -18,9 +18,10 @@ DECLARE_CYCLE_STAT(TEXT("ObjectCallUFunction"), STAT_ObjectCallUFunction, STATGR
 
 const char* FLuaUObject::UOBJECT_METATABLE = "UObject_Metatable";
 
-FLuaUObject::FLuaUObject(UObject* InSource, UObject* InParent)
+FLuaUObject::FLuaUObject(UObject* InSource, UObject* InParent, bool InbLuaGC)
 	: Source(InSource)
 	, Parent(InParent)
+	, bLuaGC(InbLuaGC)
 {
 
 }
@@ -30,7 +31,7 @@ FLuaUObject::~FLuaUObject()
 
 }
 
-int FLuaUObject::Push(lua_State* L, UObject* InSource, UObject* InParent/* = nullptr*/)
+int FLuaUObject::Push(lua_State* L, UObject* InSource, UObject* InParent/* = nullptr*/, bool InbLuaGC/* = true*/)
 {
 	SCOPE_CYCLE_COUNTER(STAT_ObjectPush);
 
@@ -55,7 +56,7 @@ int FLuaUObject::Push(lua_State* L, UObject* InSource, UObject* InParent/* = nul
 	}
 
 	void* Buffer = lua_newuserdata(L, sizeof(FLuaUObject));
-	FLuaUObject* LuaUObject = new(Buffer) FLuaUObject(InSource, InParent);
+	FLuaUObject* LuaUObject = new(Buffer) FLuaUObject(InSource, InParent, InbLuaGC);
 
 	if (luaL_newmetatable(L, UOBJECT_METATABLE))
 	{
@@ -206,7 +207,7 @@ int FLuaUObject::ToString(lua_State* L)
 {
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
 
-	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UObject[%s]"), LuaUObject->Source.IsValid() ? *(LuaUObject->Source->GetName()) : TEXT("null"))));
+	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UObject[%s][%x]"), LuaUObject->Source.IsValid() ? *(LuaUObject->Source->GetName()) : TEXT("null"), LuaUObject->Source.Get())));
 
 	return 1;
 }
@@ -229,6 +230,10 @@ int FLuaUObject::CallUFunction(lua_State* L)
 int FLuaUObject::GC(lua_State* L)
 {
 	FLuaUObject* LuaUObject = (FLuaUObject*)luaL_checkudata(L, 1, UOBJECT_METATABLE);
+	if (!LuaUObject->bLuaGC)
+	{
+		return 0;
+	}
 
 	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
 	if (LuaStateWrapper && LuaUObject && LuaUObject->Parent)

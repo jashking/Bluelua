@@ -88,8 +88,9 @@ ULuaFunctionDelegate* ULuaFunctionDelegate::Create(UObject* InDelegateOwner, TSh
 
 ULuaFunctionDelegate* ULuaFunctionDelegate::Fetch(lua_State* L, int32 Index)
 {
-	ULuaFunctionDelegate* FunctionDelegate = (ULuaFunctionDelegate*)lua_touserdata(L, Index);
-	if (!FunctionDelegate || !FunctionDelegate->IsValidLowLevelFast())
+	UObject* DelegateObject = FLuaUObject::Fetch(L, Index);
+	ULuaFunctionDelegate* FunctionDelegate = Cast<ULuaFunctionDelegate>(DelegateObject);
+	if (!FunctionDelegate)
 	{
 		luaL_error(L, "Param %d is not an ULuaFunctionDelegate! Use CreateFunctionDelegate to create one.", Index);
 	}
@@ -126,10 +127,7 @@ int ULuaFunctionDelegate::CreateFunctionDelegate(lua_State* L)
 		return 0;
 	}
 
-	LuaStateWrapper->AddReference(FunctionDelegate, DelegateOwner);
-
-	lua_pushlightuserdata(L, FunctionDelegate);
-	return 1;
+	return FLuaUObject::Push(L, FunctionDelegate, DelegateOwner, false);
 }
 
 int ULuaFunctionDelegate::DeleteFunctionDelegate(lua_State* L)

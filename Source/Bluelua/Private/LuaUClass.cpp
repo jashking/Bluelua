@@ -178,7 +178,7 @@ int FLuaUClass::ToString(lua_State* L)
 {
 	FLuaUClass* LuaUClass = (FLuaUClass*)luaL_checkudata(L, 1, UCLASS_METATABLE);
 
-	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UClass[%s]"), LuaUClass->Source.IsValid() ? *(LuaUClass->Source->GetName()) : TEXT("null"))));
+	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UClass[%s][%x]"), LuaUClass->Source.IsValid() ? *(LuaUClass->Source->GetName()) : TEXT("null"), LuaUClass->Source.Get())));
 
 	return 1;
 }

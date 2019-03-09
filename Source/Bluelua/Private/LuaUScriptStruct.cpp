@@ -82,7 +82,7 @@ int FLuaUScriptStruct::ToString(lua_State* L)
 {
 	FLuaUScriptStruct* LuaUScriptStruct = (FLuaUScriptStruct*)luaL_checkudata(L, 1, USCRIPTSTRUCT_METATABLE);
 
-	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UScriptStruct[%s]"), LuaUScriptStruct->Source.IsValid() ? *(LuaUScriptStruct->Source->GetName()) : TEXT("null"))));
+	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UScriptStruct[%s][%x]"), LuaUScriptStruct->Source.IsValid() ? *(LuaUScriptStruct->Source->GetName()) : TEXT("null"), LuaUScriptStruct->Source.Get())));
 
 	return 1;
 }

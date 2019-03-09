@@ -232,7 +232,7 @@ int FLuaUDelegate::ToString(lua_State* L)
 {
 	FLuaUDelegate* LuaUDelegate = (FLuaUDelegate*)luaL_checkudata(L, 1, UDELEGATE_METATABLE);
 
-	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UDelegate[%s]"), LuaUDelegate->Function ? *(LuaUDelegate->Function->GetName()) : TEXT("null"))));
+	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UDelegate[%s][%x]"), LuaUDelegate->Function ? *(LuaUDelegate->Function->GetName()) : TEXT("null"), LuaUDelegate)));
 
 	return 1;
 }

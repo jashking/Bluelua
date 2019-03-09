@@ -176,7 +176,7 @@ int FLuaUStruct::ToString(lua_State* L)
 {
 	FLuaUStruct* LuaUStruct = (FLuaUStruct*)luaL_checkudata(L, 1, USTRUCT_METATABLE);
 
-	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UStruct[%s]"), LuaUStruct->Source.IsValid() ? *(LuaUStruct->Source->GetName()) : TEXT("null"))));
+	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UStruct[%s][%x]"), LuaUStruct->Source.IsValid() ? *(LuaUStruct->Source->GetName()) : TEXT("null"), LuaUStruct->Source.Get())));
 
 	return 1;
 }
