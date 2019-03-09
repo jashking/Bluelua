@@ -9,7 +9,6 @@
 #include "lua.hpp"
 #include "LuaFunctionDelegate.h"
 #include "LuaState.h"
-#include "LuaUObject.h"
 
 DECLARE_CYCLE_STAT(TEXT("DelegatePush"), STAT_DelegatePush, STATGROUP_Bluelua);
 
@@ -85,49 +84,6 @@ bool FLuaUDelegate::Fetch(lua_State* L, int32 Index, UFunction* InFunction, FScr
 	return true;
 }
 
-int FLuaUDelegate::CreateFunctionDelegate(lua_State* L)
-{
-	UObject* DelegateOwner = FLuaUObject::Fetch(L, 1);
-	if (!DelegateOwner)
-	{
-		luaL_error(L, "Create delegate failed! Param 1 must be a UObject as owner!");
-		return 0;
-	}
-
-	const int Param2Type = lua_type(L, 2);
-	if (Param2Type != LUA_TFUNCTION && lua_type(L, 3) != LUA_TFUNCTION)
-	{
-		luaL_error(L, "Create delegate failed! Param 2 or Param 3 must be a function!");
-	}
-
-	const int FunctionIndex = (Param2Type == LUA_TFUNCTION) ? 2 : 3;
-
-	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
-	if (!LuaStateWrapper)
-	{
-		return 0;
-	}
-
-	ULuaFunctionDelegate* FunctionDelegate = ULuaFunctionDelegate::Create(DelegateOwner, LuaStateWrapper->AsShared(), nullptr, FunctionIndex);
-	if (!FunctionDelegate)
-	{
-		return 0;
-	}
-
-	return FLuaUObject::Push(L, FunctionDelegate, DelegateOwner);
-}
-
-int FLuaUDelegate::CreateLatentAction(lua_State* L)
-{
-	ULuaFunctionDelegate* FunctionDelegate = ULuaFunctionDelegate::Fetch(L, 1);
-	FGuid Guid = FGuid::NewGuid();
-	FLatentActionInfo LatentActionInfo(0, GetTypeHash(Guid), ULuaFunctionDelegate::DelegateFunctionName, FunctionDelegate);
-
-	FLuaUStruct::Push(L, FLatentActionInfo::StaticStruct(), (void*)&LatentActionInfo);
-
-	return 1;
-}
-
 int FLuaUDelegate::Index(lua_State* L)
 {
 	FLuaUDelegate* LuaUDelegate = (FLuaUDelegate*)luaL_checkudata(L, 1, UDELEGATE_METATABLE);
@@ -145,6 +101,11 @@ int FLuaUDelegate::Index(lua_State* L)
 	else if (PropertyName.Equals(TEXT("Remove")))
 	{
 		lua_pushcfunction(L, &FLuaUDelegate::Remove);
+		return 1;
+	}
+	else if (PropertyName.Equals(TEXT("Clear")))
+	{
+		lua_pushcfunction(L, &FLuaUDelegate::Clear);
 		return 1;
 	}
 
@@ -197,8 +158,6 @@ int FLuaUDelegate::Remove(lua_State* L)
 	FLuaUDelegate* LuaUDelegate = (FLuaUDelegate*)luaL_checkudata(L, 1, UDELEGATE_METATABLE);
 	ULuaFunctionDelegate* FunctionDelegate = ULuaFunctionDelegate::Fetch(L, 2);
 
-	FunctionDelegate->Clear();
-
 	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
 	if (LuaStateWrapper)
 	{
@@ -221,7 +180,48 @@ int FLuaUDelegate::Remove(lua_State* L)
 		FScriptDelegate* ScriptDelegate = reinterpret_cast<FScriptDelegate*>(LuaUDelegate->Source);
 		if (ScriptDelegate)
 		{
-			ScriptDelegate->Unbind();
+			ScriptDelegate->Clear();
+		}
+	}
+
+	return 0;
+}
+
+int FLuaUDelegate::Clear(lua_State* L)
+{
+	FLuaUDelegate* LuaUDelegate = (FLuaUDelegate*)luaL_checkudata(L, 1, UDELEGATE_METATABLE);
+	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
+
+	if (LuaUDelegate->bIsMulticast)
+	{
+		FMulticastScriptDelegate* MulticastScriptDelegate = reinterpret_cast<FMulticastScriptDelegate*>(LuaUDelegate->Source);
+		if (MulticastScriptDelegate)
+		{
+			TArray<UObject*> Objects = MulticastScriptDelegate->GetAllObjects();
+			for (UObject* Object : Objects)
+			{
+				ULuaFunctionDelegate* FunctionDelegate = Cast<ULuaFunctionDelegate>(Object);
+				if (FunctionDelegate && LuaStateWrapper)
+				{
+					LuaStateWrapper->RemoveReference(FunctionDelegate, FunctionDelegate->GetOuter());
+				}
+			}
+
+			MulticastScriptDelegate->Clear();
+		}
+	}
+	else
+	{
+		FScriptDelegate* ScriptDelegate = reinterpret_cast<FScriptDelegate*>(LuaUDelegate->Source);
+		if (ScriptDelegate)
+		{
+			ULuaFunctionDelegate* FunctionDelegate = Cast<ULuaFunctionDelegate>(ScriptDelegate->GetUObject());
+			if (FunctionDelegate && LuaStateWrapper)
+			{
+				LuaStateWrapper->RemoveReference(FunctionDelegate, FunctionDelegate->GetOuter());
+			}
+
+			ScriptDelegate->Clear();
 		}
 	}
 

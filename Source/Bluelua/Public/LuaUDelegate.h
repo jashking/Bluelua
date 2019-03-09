@@ -12,14 +12,13 @@ public:
 
 	static int Push(lua_State* L, void* InSource, UFunction* InFunction, bool InbIsMulticast, void* InBuffer = nullptr);
 	static bool Fetch(lua_State* L, int32 Index, UFunction* InFunction, FScriptDelegate* InScriptDelegate);
-	static int CreateFunctionDelegate(lua_State* L);
-	static int CreateLatentAction(lua_State* L);
 
 protected:
 	static int Index(lua_State* L);
 	static int ToString(lua_State* L);
 	static int Add(lua_State* L);
 	static int Remove(lua_State* L);
+	static int Clear(lua_State* L);
 
 	static const char* UDELEGATE_METATABLE;
 

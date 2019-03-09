@@ -88,14 +88,61 @@ ULuaFunctionDelegate* ULuaFunctionDelegate::Create(UObject* InDelegateOwner, TSh
 
 ULuaFunctionDelegate* ULuaFunctionDelegate::Fetch(lua_State* L, int32 Index)
 {
-	UObject* FunctionObject = FLuaUObject::Fetch(L, Index);
-	ULuaFunctionDelegate* FunctionDelegate = Cast<ULuaFunctionDelegate>(FunctionObject);
-	if (!FunctionDelegate)
+	ULuaFunctionDelegate* FunctionDelegate = (ULuaFunctionDelegate*)lua_touserdata(L, Index);
+	if (!FunctionDelegate || !FunctionDelegate->IsValidLowLevelFast())
 	{
 		luaL_error(L, "Param %d is not an ULuaFunctionDelegate! Use CreateFunctionDelegate to create one.", Index);
 	}
 
 	return FunctionDelegate;
+}
+
+int ULuaFunctionDelegate::CreateFunctionDelegate(lua_State* L)
+{
+	UObject* DelegateOwner = FLuaUObject::Fetch(L, 1);
+	if (!DelegateOwner)
+	{
+		luaL_error(L, "Create delegate failed! Param 1 must be a UObject as owner!");
+		return 0;
+	}
+
+	const int Param2Type = lua_type(L, 2);
+	if (Param2Type != LUA_TFUNCTION && lua_type(L, 3) != LUA_TFUNCTION)
+	{
+		luaL_error(L, "Create delegate failed! Param 2 or Param 3 must be a function!");
+	}
+
+	const int FunctionIndex = (Param2Type == LUA_TFUNCTION) ? 2 : 3;
+
+	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
+	if (!LuaStateWrapper)
+	{
+		return 0;
+	}
+
+	ULuaFunctionDelegate* FunctionDelegate = ULuaFunctionDelegate::Create(DelegateOwner, LuaStateWrapper->AsShared(), nullptr, FunctionIndex);
+	if (!FunctionDelegate)
+	{
+		return 0;
+	}
+
+	LuaStateWrapper->AddReference(FunctionDelegate, DelegateOwner);
+
+	lua_pushlightuserdata(L, FunctionDelegate);
+	return 1;
+}
+
+int ULuaFunctionDelegate::DeleteFunctionDelegate(lua_State* L)
+{
+	ULuaFunctionDelegate* FunctionDelegate = ULuaFunctionDelegate::Fetch(L, 1);
+
+	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
+	if (LuaStateWrapper)
+	{
+		LuaStateWrapper->RemoveReference(FunctionDelegate, FunctionDelegate->GetOuter());
+	}
+
+	return 0;
 }
 
 void ULuaFunctionDelegate::BindLuaState(TSharedPtr<FLuaState> InLuaState)

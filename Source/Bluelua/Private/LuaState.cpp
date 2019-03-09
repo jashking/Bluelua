@@ -80,8 +80,8 @@ FLuaState::FLuaState()
 		lua_register(L, "LoadClass", LuaLoadClass);
 		lua_register(L, "LoadStruct", LuaLoadStruct);
 		lua_register(L, "GetEnum", GetEnumValue);
-		lua_register(L, "CreateFunctionDelegate", &FLuaUDelegate::CreateFunctionDelegate);
-		lua_register(L, "CreateLatentAction", &FLuaUDelegate::CreateLatentAction);
+		lua_register(L, "CreateFunctionDelegate", &ULuaFunctionDelegate::CreateFunctionDelegate);
+		lua_register(L, "DeleteFunctionDelegate", &ULuaFunctionDelegate::DeleteFunctionDelegate);
 
 		// bind this to L
 		*((void**)lua_getextraspace(L)) = this;
