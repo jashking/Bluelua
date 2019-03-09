@@ -127,20 +127,7 @@ int ULuaFunctionDelegate::CreateFunctionDelegate(lua_State* L)
 		return 0;
 	}
 
-	return FLuaUObject::Push(L, FunctionDelegate, DelegateOwner, false);
-}
-
-int ULuaFunctionDelegate::DeleteFunctionDelegate(lua_State* L)
-{
-	ULuaFunctionDelegate* FunctionDelegate = ULuaFunctionDelegate::Fetch(L, 1);
-
-	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
-	if (LuaStateWrapper)
-	{
-		LuaStateWrapper->RemoveReference(FunctionDelegate, FunctionDelegate->GetOuter());
-	}
-
-	return 0;
+	return FLuaUObject::Push(L, FunctionDelegate, DelegateOwner);
 }
 
 void ULuaFunctionDelegate::BindLuaState(TSharedPtr<FLuaState> InLuaState)

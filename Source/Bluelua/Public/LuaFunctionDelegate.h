@@ -19,7 +19,6 @@ public:
 	static ULuaFunctionDelegate* Create(UObject* InDelegateOwner, TSharedPtr<FLuaState> InLuaState, UFunction* InSignatureFunction, int InLuaFunctionIndex);
 	static ULuaFunctionDelegate* Fetch(lua_State* L, int32 Index);
 	static int CreateFunctionDelegate(lua_State* L);
-	static int DeleteFunctionDelegate(lua_State* L);
 
 	void BindLuaState(TSharedPtr<FLuaState> InLuaState);
 	void BindLuaFunction(UFunction* InSignatureFunction, int InLuaFunctionIndex);
