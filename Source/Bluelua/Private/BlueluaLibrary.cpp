@@ -42,3 +42,41 @@ int32 UBlueluaLibrary::Delay(UObject* WorldContextObject, float Duration, int32 
 
 	return -1;
 }
+
+void UBlueluaLibrary::BindAction(AActor* TargetActor, FName ActionName, EInputEvent KeyEvent, FInputActionHandlerDynamicSignature Action)
+{
+	if (!TargetActor || !TargetActor->InputComponent)
+	{
+		return;
+	}
+
+	FInputActionBinding AB(ActionName, KeyEvent);
+	AB.ActionDelegate.BindDelegate(Action.GetUObject(), Action.GetFunctionName());
+	TargetActor->InputComponent->AddActionBinding(AB);
+}
+
+void UBlueluaLibrary::BindAxisAction(AActor* TargetActor, FName AxisName, FInputAxisHandlerDynamicSignature Action)
+{
+	if (!TargetActor || !TargetActor->InputComponent)
+	{
+		return;
+	}
+
+	FInputAxisBinding AxisBinding(AxisName);
+	AxisBinding.AxisDelegate.BindDelegate(Action.GetUObject(), Action.GetFunctionName());
+
+	TargetActor->InputComponent->AxisBindings.Emplace(AxisBinding);
+}
+
+void UBlueluaLibrary::BindTouchAction(AActor* TargetActor, EInputEvent InputEvent, FInputTouchHandlerDynamicSignature Action)
+{
+	if (!TargetActor || !TargetActor->InputComponent)
+	{
+		return;
+	}
+
+	FInputTouchBinding TouchBinding(InputEvent);
+	TouchBinding.TouchDelegate.BindDelegate(Action.GetUObject(), Action.GetFunctionName());
+
+	TargetActor->InputComponent->TouchBindings.Emplace(TouchBinding);
+}
