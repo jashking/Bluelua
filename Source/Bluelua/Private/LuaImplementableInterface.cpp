@@ -42,22 +42,6 @@ private:
 	const char* GlobalName;
 };
 
-struct EventOnInitBindingLuaPath_Parms
-{
-	FString ReturnValue;
-};
-
-struct EventShouldEnableLuaBinding_Parms
-{
-	bool ReturnValue;
-
-	/** Constructor, initializes return property only **/
-	EventShouldEnableLuaBinding_Parms()
-		: ReturnValue(false)
-	{
-	}
-};
-
 TMap<FLuaState*, TSet<ILuaImplementableInterface*>> ILuaImplementableInterface::LuaImplementableObjects;
 
 bool ILuaImplementableInterface::IsLuaBound() const
@@ -136,7 +120,7 @@ bool ILuaImplementableInterface::OnInitLuaBinding()
 
 	UObject* ThisObject = Cast<UObject>(this);
 
-	EventShouldEnableLuaBinding_Parms ShouldEnableLuaBinding_Parms;
+	LuaImplementableInterface_eventShouldEnableLuaBinding_Parms ShouldEnableLuaBinding_Parms;
 	ThisObject->UObject::ProcessEvent(ThisObject->FindFunctionChecked(FName(TEXT("ShouldEnableLuaBinding"))), &ShouldEnableLuaBinding_Parms);
 	if (!ShouldEnableLuaBinding_Parms.ReturnValue)
 	{
@@ -144,7 +128,7 @@ bool ILuaImplementableInterface::OnInitLuaBinding()
 		return false;
 	}
 
-	EventOnInitBindingLuaPath_Parms OnInitBindingLuaPath_Parms;
+	LuaImplementableInterface_eventOnInitBindingLuaPath_Parms OnInitBindingLuaPath_Parms;
 	ThisObject->UObject::ProcessEvent(ThisObject->FindFunctionChecked(FName(TEXT("OnInitBindingLuaPath"))), &OnInitBindingLuaPath_Parms);
 	if (OnInitBindingLuaPath_Parms.ReturnValue.IsEmpty())
 	{
