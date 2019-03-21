@@ -25,11 +25,14 @@ public:
 	static int32 Delay(UObject* WorldContextObject, float Duration, int32 InDelegateId, class ULuaFunctionDelegate* InDelegate);
 
 	UFUNCTION(BlueprintCallable, Category = "Utilities|BlueluaLibrary")
-	static void BindAction(AActor* TargetActor, FName ActionName, EInputEvent KeyEvent, FInputActionHandlerDynamicSignature Action);
+	static void BindAction(AActor* TargetActor, FName ActionName, EInputEvent KeyEvent, bool InbConsumeInput, bool InbExecuteWhenPaused, FInputActionHandlerDynamicSignature Action);
 
 	UFUNCTION(BlueprintCallable, Category = "Utilities|BlueluaLibrary")
-	static void BindAxisAction(AActor* TargetActor, FName AxisName, FInputAxisHandlerDynamicSignature Action);
+	static void BindAxisAction(AActor* TargetActor, FName AxisName, bool InbConsumeInput, bool InbExecuteWhenPaused, FInputAxisHandlerDynamicSignature Action);
 
 	UFUNCTION(BlueprintCallable, Category = "Utilities|BlueluaLibrary")
-	static void BindTouchAction(AActor* TargetActor, EInputEvent InputEvent, FInputTouchHandlerDynamicSignature Action);
+	static void BindTouchAction(AActor* TargetActor, EInputEvent InputEvent, bool InbConsumeInput, bool InbExecuteWhenPaused, FInputTouchHandlerDynamicSignature Action);
+
+	UFUNCTION(BlueprintCallable, Category = "Utilities|BlueluaLibrary")
+	static void BindKeyAction(AActor* TargetActor, FInputChord InInputChord, EInputEvent KeyEvent, bool InbConsumeInput, bool InbExecuteWhenPaused, FInputActionHandlerDynamicSignature Action);
 };

@@ -411,10 +411,11 @@ bool FLuaObjectBase::FetchArrayProperty(lua_State* L, UProperty* Property, void*
 	if (auto ArrayProperty = Cast<UArrayProperty>(Property))
 	{
 		FScriptArrayHelper ArrayHelper(ArrayProperty, Params);
+		const int TableIndex = lua_absindex(L, Index);
 
 		int32 Count = 0;
 		lua_pushnil(L); // initial key, stack = [..., nil]
-		while (lua_next(L, Index))
+		while (lua_next(L, TableIndex))
 		{
 			if (ArrayHelper.Num() <= Count)
 			{
@@ -449,9 +450,10 @@ bool FLuaObjectBase::FetchSetProperty(lua_State* L, UProperty* Property, void* P
 	if (auto SetProperty = Cast<USetProperty>(Property))
 	{
 		FScriptSetHelper SetHelper(SetProperty, Params);
+		const int TableIndex = lua_absindex(L, Index);
 
 		lua_pushnil(L);
-		while (lua_next(L, Index))
+		while (lua_next(L, TableIndex))
 		{
 			const int32 ElementIndex = SetHelper.AddDefaultValue_Invalid_NeedsRehash();
 			FetchProperty(L, SetProperty->ElementProp, SetHelper.GetElementPtr(ElementIndex), -1);
@@ -476,9 +478,10 @@ bool FLuaObjectBase::FetchMapProperty(lua_State* L, UProperty* Property, void* P
 	if (auto MapProperty = Cast<UMapProperty>(Property))
 	{
 		FScriptMapHelper MapHelper(MapProperty, Params);
+		const int TableIndex = lua_absindex(L, Index);
 
 		lua_pushnil(L);
-		while (lua_next(L, Index))
+		while (lua_next(L, TableIndex))
 		{
 			const int32 ElementIndex = MapHelper.AddDefaultValue_Invalid_NeedsRehash();
 

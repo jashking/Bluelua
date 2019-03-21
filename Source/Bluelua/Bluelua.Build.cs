@@ -37,6 +37,7 @@ public class Bluelua : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"UMG",
+				"Slate",
 				// ... add private dependencies that you statically link with here ...	
 				"Liblua",
 				"LibLuasocket",

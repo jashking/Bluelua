@@ -83,6 +83,29 @@ bool FLuaUStruct::Fetch(lua_State* L, int32 Index, UScriptStruct* OutStruct, uin
 		return false;
 	}
 
+	if (lua_istable(L, Index))
+	{
+		const int TableIndex = lua_absindex(L, Index);
+
+		lua_pushnil(L);
+		while (lua_next(L, TableIndex))
+		{
+			if (lua_isstring(L, -2))
+			{
+				const char* KeyName = lua_tostring(L, -2);
+				UProperty* Property = FindStructPropertyByName(OutStruct, KeyName);
+				if (Property && !(Property->PropertyFlags & CPF_BlueprintReadOnly))
+				{
+					FLuaObjectBase::FetchProperty(L, Property, Property->ContainerPtrToValuePtr<uint8>(OutBuffer), -1);
+				}
+			}
+
+			lua_pop(L, 1);
+		}
+
+		return true;
+	}
+
 	FLuaUStruct* LuaUStruct = (FLuaUStruct*)luaL_checkudata(L, Index, FLuaUStruct::USTRUCT_METATABLE);
 
 	//const int32 TargetSize = StructProperty->Struct->GetStructureSize();
