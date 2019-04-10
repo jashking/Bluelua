@@ -191,9 +191,9 @@ bool FLuaState::DoString(const FString& String)
 		return false;
 	}
 
-	const char* Buffer = TCHAR_TO_UTF8(*String);
+	FTCHARToUTF8 Converter(*String);
 
-	return DoBuffer((const uint8*)Buffer, FCStringAnsi::Strlen(Buffer));
+	return DoBuffer((const uint8*)Converter.Get(), Converter.Length());
 }
 
 bool FLuaState::DoFile(const FString& FilePath)
