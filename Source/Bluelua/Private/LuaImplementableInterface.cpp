@@ -261,7 +261,9 @@ bool ILuaImplementableInterface::InitBPFunctionOverriding()
 			FLuaObjectBase::Fetch(L, -2, FunctionName);
 
 			UFunction* TargetFunction = Class->FindFunctionByName(*FunctionName);
-			if (TargetFunction && !TargetFunction->IsNative())
+			if (TargetFunction && !TargetFunction->IsNative() &&
+				(TargetFunction->FunctionFlags & FUNC_BlueprintCallable) &&
+				(TargetFunction->FunctionFlags & FUNC_BlueprintEvent))
 			{
 				// set bp function to native and change native function from UObject::ProcessInternal to
 				// our own function so that when bp function get called we can know that and redirect to lua
