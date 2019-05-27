@@ -232,7 +232,7 @@ int FLuaObjectBase::PushMapProperty(lua_State* L, UProperty* Property, void* Par
 	for (int Index = 0; Index < Num; ++Index)
 	{
 		uint8* PairPtr = MapHelper.GetPairPtr(Index);
-		PushProperty(L, MapProperty->KeyProp, PairPtr + MapProperty->MapLayout.KeyOffset);
+		PushProperty(L, MapProperty->KeyProp, PairPtr/* + MapProperty->MapLayout.KeyOffset*/);
 		PushProperty(L, MapProperty->ValueProp, PairPtr + MapProperty->MapLayout.ValueOffset);
 		lua_settable(L, -3);
 	}
@@ -487,7 +487,7 @@ bool FLuaObjectBase::FetchMapProperty(lua_State* L, UProperty* Property, void* P
 
 			uint8* PairPtr = MapHelper.GetPairPtr(ElementIndex);
 			FetchProperty(L, MapProperty->ValueProp, PairPtr + MapProperty->MapLayout.ValueOffset, -1);
-			FetchProperty(L, MapProperty->KeyProp, PairPtr + MapProperty->MapLayout.KeyOffset, -2);
+			FetchProperty(L, MapProperty->KeyProp, PairPtr/* + MapProperty->MapLayout.KeyOffset*/, -2);
 			lua_pop(L, 1);
 		}
 		MapHelper.Rehash();
