@@ -171,10 +171,10 @@ bool ILuaImplementableInterface::OnInitLuaBinding()
 		return false;
 	}
 
-	ModuleReferanceIndex = luaL_ref(L, LUA_REGISTRYINDEX);
-
 	InitBPFunctionOverriding();
 
+	ModuleReferanceIndex = luaL_ref(L, LUA_REGISTRYINDEX);
+	
 	return true;
 }
 
@@ -243,18 +243,6 @@ bool ILuaImplementableInterface::InitBPFunctionOverriding()
 
 	ClearBPFunctionOverriding();
 
-	if (!PrepareLuaFunction(TEXT("OnInitBPFunctionOverriding")))
-	{
-		return false;
-	}
-
-	const int ModuleIndex = lua_absindex(L, -3);
-
-	if (!LuaState->CallLuaFunction(1, 1))
-	{
-		return false;
-	}
-
 	if (lua_type(L, -1) != LUA_TTABLE)
 	{
 		// lua return value is not an array
@@ -262,43 +250,25 @@ bool ILuaImplementableInterface::InitBPFunctionOverriding()
 	}
 
 	UClass* Class = Cast<UObject>(this)->GetClass();
-	const int ReturnTableIndex = lua_gettop(L);
+	const int ModuleTableIndex = lua_gettop(L);
 
 	lua_pushnil(L); // initial key, stack = [..., nil]
-	while (lua_next(L, ReturnTableIndex)) // stack = [..., key, value]
+	while (lua_next(L, ModuleTableIndex)) // stack = [..., key, value]
 	{
-		FString TargetBPFunctionName;
-		FLuaObjectBase::Fetch(L, -1, TargetBPFunctionName);
-
-		const bool bIsModuleFunction = (lua_getfield(L, ModuleIndex, TCHAR_TO_UTF8(*TargetBPFunctionName)) == LUA_TFUNCTION); // stack = [..., key, value, func]
-		lua_pop(L, 1); // stack = [..., key, value]
-
-		if (bIsModuleFunction)
+		if (lua_isfunction(L, -1) && lua_type(L, -2) == LUA_TSTRING)
 		{
-			UFunction* BPFunction = Class->FindFunctionByName(*TargetBPFunctionName);
-			if (BPFunction && !BPFunction->IsNative())
+			FString FunctionName;
+			FLuaObjectBase::Fetch(L, -2, FunctionName);
+
+			UFunction* TargetFunction = Class->FindFunctionByName(*FunctionName);
+			if (TargetFunction && !TargetFunction->IsNative())
 			{
 				// set bp function to native and change native function from UObject::ProcessInternal to
 				// our own function so that when bp function get called we can know that and redirect to lua
-				BPFunction->FunctionFlags |= FUNC_Native;
-				BPFunction->SetNativeFunc(&ILuaImplementableInterface::ProcessBPFunctionOverride);
-				OverridedBPFunctionList.Emplace(TargetBPFunctionName);
+				TargetFunction->FunctionFlags |= FUNC_Native;
+				TargetFunction->SetNativeFunc(&ILuaImplementableInterface::ProcessBPFunctionOverride);
+				OverridedBPFunctionList.Emplace(FunctionName);
 			}
-			else
-			{
-				if (!BPFunction)
-				{
-					UE_LOG(LogBluelua, Warning, TEXT("Lua override bp function failed! No bp function named: %s in class: %s!"), *TargetBPFunctionName, *Class->GetName());
-				}
-				else
-				{
-					UE_LOG(LogBluelua, Warning, TEXT("Lua override bp function failed! Cann't override a native function: %s in class: %s!"), *TargetBPFunctionName, *Class->GetName());
-				}
-			}
-		}
-		else
-		{
-			UE_LOG(LogBluelua, Warning, TEXT("Lua override bp function failed! No lua function named: %s!"), *TargetBPFunctionName);
 		}
 
 		lua_pop(L, 1); // stack = [..., key]
