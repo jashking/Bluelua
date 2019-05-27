@@ -456,7 +456,7 @@ int FLuaState::LuaPrint(lua_State * L)
 	}
 #endif
 
-	UE_LOG(LogBluelua, Display, TEXT("%s%sLua log: %s"), *Prefix, Prefix.IsEmpty() ? TEXT("") : TEXT(" "), *Message);
+	UE_LOG(LogBluelua, Display, TEXT("%sLua log: %s"), *Prefix, *Message);
 
 	return 0;
 }
