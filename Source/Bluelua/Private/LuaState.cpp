@@ -1,5 +1,8 @@
 #include "LuaState.h"
 
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "GenericPlatform/GenericPlatformMemory.h"
 #include "HAL/UnrealMemory.h"
 #include "Misc/FileHelper.h"
@@ -146,6 +149,7 @@ FLuaState::~FLuaState()
 
 	UE_LOG(LogBluelua, Display, TEXT("Lua state closed. LuaState[0x%x], L[0x%x]."), this, L);
 	L = nullptr;
+	OwnerGameInstane.Reset();
 }
 
 lua_State* FLuaState::GetState() const
@@ -360,6 +364,16 @@ void FLuaState::GetObjectsByOwner(UObject* Owner, TSet<UObject*>& Objects)
 	}
 }
 
+void FLuaState::SetOwnerGameInstane(class UGameInstance* InOwnerGameInstane)
+{
+	OwnerGameInstane = InOwnerGameInstane;
+}
+
+class UGameInstance* FLuaState::GetOwnerGameInstance()
+{
+	return OwnerGameInstane.Get();
+}
+
 void FLuaState::AddReferencedObjects(FReferenceCollector& Collector)
 {
 	Collector.AddReferencedObjects(ReferencedObjectsWithOwner);
@@ -415,7 +429,34 @@ int FLuaState::LuaPrint(lua_State * L)
 		Message = FString::Printf(TEXT("%s%s%s"), *Message, Message.IsEmpty() ? TEXT("") : TEXT("\t"), UTF8_TO_TCHAR(StackMessage));
 	}
 
-	UE_LOG(LogBluelua, Display, TEXT("Lua log: %s"), *Message);
+	FString Prefix;
+
+#if WITH_EDITOR
+	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
+	UGameInstance* OwnerGameInstane = LuaStateWrapper ? LuaStateWrapper->GetOwnerGameInstance() : nullptr;
+
+	UWorld* World = OwnerGameInstane ? OwnerGameInstane->GetWorldContext()->World() : nullptr;
+	if (World)
+	{
+		if (World->WorldType == EWorldType::PIE)
+		{
+			switch (World->GetNetMode())
+			{
+			case NM_Client:
+				Prefix = FString::Printf(TEXT("Client %d: "), GPlayInEditorID - 1);
+				break;
+			case NM_DedicatedServer:
+			case NM_ListenServer:
+				Prefix = FString::Printf(TEXT("Server: "));
+				break;
+			case NM_Standalone:
+				break;
+			}
+		}
+	}
+#endif
+
+	UE_LOG(LogBluelua, Display, TEXT("%s%sLua log: %s"), *Prefix, Prefix.IsEmpty() ? TEXT("") : TEXT(" "), *Message);
 
 	return 0;
 }

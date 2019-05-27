@@ -28,6 +28,9 @@ public:
 	void RemoveReferenceByOwner(UObject* Owner);
 	void GetObjectsByOwner(UObject* Owner, TSet<UObject*>& Objects);
 
+	void SetOwnerGameInstane(class UGameInstance* InOwnerGameInstane);
+	class UGameInstance* GetOwnerGameInstance();
+
 	// Begin FGCObject interface
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 	virtual FString GetReferencerName() const override;
@@ -60,4 +63,6 @@ protected:
 	TMap<UObject*, TWeakObjectPtr<UObject>> ReferencedObjectsWithOwner;
 
 	FDelegateHandle PostGarbageCollectDelegate;
+
+	TWeakObjectPtr<class UGameInstance> OwnerGameInstane;
 };
