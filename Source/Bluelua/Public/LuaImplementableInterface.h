@@ -55,11 +55,6 @@ protected:
 
 			Function->FunctionFlags = FunctionFlags;
 			Function->SetNativeFunc(NativeFucPtr);
-
-			if (Function->GetName().Equals(TEXT("TestMulticastEvent")))
-			{
-				UE_LOG(LogTemp, Display, TEXT("LuaProcessEvent TestMulticastEvent"))
-			}
 		}
 	}
 
