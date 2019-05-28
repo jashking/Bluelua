@@ -35,10 +35,7 @@ void ALuaImplementableActor::BeginDestroy()
 
 void ALuaImplementableActor::ProcessEvent(UFunction* Function, void* Parameters)
 {
-	if (!OnProcessLuaOverrideEvent(Function, Parameters))
-	{
-		Super::ProcessEvent(Function, Parameters);
-	}
+	LuaProcessEvent<Super>(Function, Parameters);
 }
 
 FString ALuaImplementableActor::OnInitBindingLuaPath_Implementation()

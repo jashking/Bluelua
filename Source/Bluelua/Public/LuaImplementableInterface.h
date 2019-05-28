@@ -33,6 +33,36 @@ protected:
 	virtual void OnReleaseLuaBinding();
 	virtual bool OnProcessLuaOverrideEvent(UFunction* Function, void* Parameters);
 
+	template<typename Super>
+	void LuaProcessEvent(UFunction* Function, void* Parameters)
+	{
+		if (!OnProcessLuaOverrideEvent(Function, Parameters))
+		{
+			const EFunctionFlags FunctionFlags = Function->FunctionFlags;
+			FNativeFuncPtr NativeFucPtr = Function->GetNativeFunc();
+
+			if (NativeFucPtr == &ILuaImplementableInterface::ProcessBPFunctionOverride)
+			{
+				if (!HasBPFunctionOverrding(Function->GetName()))
+				{
+					Function->FunctionFlags &= ~FUNC_Native;
+					Function->SetNativeFunc(&UObject::ProcessInternal);
+				}
+			}
+
+			Super* Object = Cast<Super>(this);
+			Object->Super::ProcessEvent(Function, Parameters);
+
+			Function->FunctionFlags = FunctionFlags;
+			Function->SetNativeFunc(NativeFucPtr);
+
+			if (Function->GetName().Equals(TEXT("TestMulticastEvent")))
+			{
+				UE_LOG(LogTemp, Display, TEXT("LuaProcessEvent TestMulticastEvent"))
+			}
+		}
+	}
+
 	UFUNCTION(BlueprintNativeEvent)
 	FString OnInitBindingLuaPath();
 	virtual FString OnInitBindingLuaPath_Implementation();

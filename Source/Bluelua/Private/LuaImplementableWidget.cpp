@@ -9,10 +9,7 @@
 
 void ULuaImplementableWidget::ProcessEvent(UFunction* Function, void* Parameters)
 {
-	if (!OnProcessLuaOverrideEvent(Function, Parameters))
-	{
-		Super::ProcessEvent(Function, Parameters);
-	}
+	LuaProcessEvent<Super>(Function, Parameters);
 }
 
 void ULuaImplementableWidget::NativeConstruct()

@@ -652,16 +652,19 @@ int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Funct
 		}
 	}
 
-	ILuaImplementableInterface* LuaObject = Cast<ILuaImplementableInterface>(Object);
-	const bool bOverride = LuaObject ? LuaObject->HasBPFunctionOverrding(Function->GetName()) : false;
-
 	const EFunctionFlags FunctionFlags = Function->FunctionFlags;
 	FNativeFuncPtr NativeFucPtr = Function->GetNativeFunc();
 
-	if (NativeFucPtr == &ILuaImplementableInterface::ProcessBPFunctionOverride && (!bOverride || bIsParentDefaultFunction))
+	if (NativeFucPtr == &ILuaImplementableInterface::ProcessBPFunctionOverride)
 	{
-		Function->FunctionFlags &= ~FUNC_Native;
-		Function->SetNativeFunc(&UObject::ProcessInternal);
+		ILuaImplementableInterface* LuaObject = Cast<ILuaImplementableInterface>(Object);
+		const bool bOverride = LuaObject ? LuaObject->HasBPFunctionOverrding(Function->GetName()) : false;
+
+		if (!bOverride || bIsParentDefaultFunction)
+		{
+			Function->FunctionFlags &= ~FUNC_Native;
+			Function->SetNativeFunc(&UObject::ProcessInternal);
+		}
 	}
 
 	if (bIsParentDefaultFunction)
