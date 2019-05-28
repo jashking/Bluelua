@@ -203,7 +203,7 @@ void ILuaImplementableInterface::OnReleaseLuaBinding()
 bool ILuaImplementableInterface::OnProcessLuaOverrideEvent(UFunction* Function, void* Parameters)
 {
 	if (!LuaState.IsValid() || ModuleReferanceIndex == LUA_NOREF
-		|| !Function || !Function->HasAnyFunctionFlags(FUNC_BlueprintEvent))
+		|| !Function || Function->HasAnyFunctionFlags(FUNC_Final))
 	{
 		return false;
 	}
@@ -216,6 +216,21 @@ bool ILuaImplementableInterface::OnProcessLuaOverrideEvent(UFunction* Function, 
 	if (!PrepareLuaFunction(Function->GetName()))
 	{
 		return false;
+	}
+
+	//if ((Function->FunctionFlags & FUNC_Native) != 0)
+	{
+		UObject* Object = Cast<UObject>(this);
+		const int32 Callspace = Object->GetFunctionCallspace(Function, Parameters, NULL);
+		if (Callspace & FunctionCallspace::Remote)
+		{
+			Object->CallRemoteFunction(Function, Parameters, NULL, NULL);
+		}
+
+		if ((Callspace & FunctionCallspace::Local) == 0)
+		{
+			return true;
+		}
 	}
 
 	return LuaState->CallLuaFunction(Function, Parameters);

@@ -85,6 +85,7 @@ Clone Bluelua to your project's *Plugins* folder, regenerate project solution an
 
 * expose lua file reader to project, do not assume lua files under ProjectContent folder
 * hot reload lua
+* optimize OnProcessLuaOverrideEvent when find lua function
 
 ## 中文版使用介绍 ##
 
