@@ -218,7 +218,7 @@ bool ILuaImplementableInterface::OnProcessLuaOverrideEvent(UFunction* Function, 
 		return false;
 	}
 
-	//if ((Function->FunctionFlags & FUNC_Native) != 0)
+	if ((Function->FunctionFlags & FUNC_Native) != 0)
 	{
 		UObject* Object = Cast<UObject>(this);
 		const int32 Callspace = Object->GetFunctionCallspace(Function, Parameters, NULL);
