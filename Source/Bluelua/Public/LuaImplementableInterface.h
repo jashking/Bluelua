@@ -22,9 +22,12 @@ class BLUELUA_API ILuaImplementableInterface
 public:
 	bool IsLuaBound() const;
 	bool CastToLua();
+	bool HasBPFunctionOverrding(const FString& FunctionName);
 
 	static void CleanAllLuaImplementableObject(FLuaState* InLuaState = nullptr);
-	
+
+	static void ProcessBPFunctionOverride(UObject* Context, struct FFrame& Stack, void* const Z_Param__Result);
+
 protected:
 	virtual bool OnInitLuaBinding();
 	virtual void OnReleaseLuaBinding();
@@ -42,14 +45,12 @@ protected:
 
 	bool InitBPFunctionOverriding();
 	void ClearBPFunctionOverriding();
-	bool HasBPFunctionOverrding(const FString& FunctionName);
 	bool PrepareLuaFunction(const FString& FunctionName);
 
 	static void AddToLuaObjectList(FLuaState* InLuaState, ILuaImplementableInterface* Object);
 	static void RemoveFromLuaObjectList(FLuaState* InLuaState, ILuaImplementableInterface* Object);
 
 	static int FillBPFunctionOverrideOutProperty(struct lua_State* L);
-	static void ProcessBPFunctionOverride(UObject* Context, struct FFrame& Stack, void* const Z_Param__Result);
 	bool CallBPFunctionOverride(UFunction* Function, FFrame& Stack, void* const Z_Param__Result);
 
 protected:

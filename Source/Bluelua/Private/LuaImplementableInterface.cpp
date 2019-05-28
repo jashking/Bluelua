@@ -369,7 +369,7 @@ void ILuaImplementableInterface::ProcessBPFunctionOverride(UObject* Context, FFr
 bool ILuaImplementableInterface::CallBPFunctionOverride(UFunction* Function, FFrame& Stack, void* const Z_Param__Result)
 {
 	SCOPE_CYCLE_COUNTER(STAT_CallBPFunctionOverride);
-
+	
 	if (!Function || !HasBPFunctionOverrding(Function->GetName()))
 	{
 		return false;

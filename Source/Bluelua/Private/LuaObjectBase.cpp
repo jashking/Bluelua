@@ -8,6 +8,7 @@
 
 #include "Bluelua.h"
 #include "lua.hpp"
+#include "LuaImplementableInterface.h"
 #include "LuaUClass.h"
 #include "LuaUDelegate.h"
 #include "LuaUObject.h"
@@ -651,6 +652,18 @@ int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Funct
 		}
 	}
 
+	ILuaImplementableInterface* LuaObject = Cast<ILuaImplementableInterface>(Object);
+	const bool bOverride = LuaObject ? LuaObject->HasBPFunctionOverrding(Function->GetName()) : false;
+
+	const EFunctionFlags FunctionFlags = Function->FunctionFlags;
+	FNativeFuncPtr NativeFucPtr = Function->GetNativeFunc();
+
+	if (NativeFucPtr == &ILuaImplementableInterface::ProcessBPFunctionOverride && (!bOverride || bIsParentDefaultFunction))
+	{
+		Function->FunctionFlags &= ~FUNC_Native;
+		Function->SetNativeFunc(&UObject::ProcessInternal);
+	}
+
 	if (bIsParentDefaultFunction)
 	{
 		Object->UObject::ProcessEvent(Function, FuncParams.GetStructMemory());
@@ -659,6 +672,9 @@ int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Funct
 	{
 		Object->ProcessEvent(Function, FuncParams.GetStructMemory());
 	}
+
+	Function->FunctionFlags = FunctionFlags;
+	Function->SetNativeFunc(NativeFucPtr);
 
 	int32 ReturnNum = 0;
 	if (ReturnValue)
