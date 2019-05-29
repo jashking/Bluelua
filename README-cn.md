@@ -2,6 +2,21 @@
 
 用 Lua 替换蓝图脚本，保持和蓝图一致的使用方式，无缝切换。Lua 中使用反射去访问虚幻对象的属性和方法，无需生成胶水代码，更加简洁易扩展，对于经常访问的方法可以在 lua 中进行 cache，减少反射访问成本。
 
+## 第三方开源库列表 ##
+
+* [lua](https://www.lua.org/) : Lua is a powerful, efficient, lightweight, embeddable scripting language
+* [luasocket](https://github.com/diegonehab/luasocket) : Network support for the Lua language
+* [Tencent LuaPanda](https://github.com/Tencent/LuaPanda) : Pandora Lua Debugger for VS Code
+
+## 特性 ##
+
+* 直接在 lua 中调用 UFunction
+* 直接在 lua 中访问 UClass/UStruct 的 UProperty 成员变量
+* 可在 lua 中重写 C++ 中的 BlueprintNativeEvent/BlueprintImplementable 事件
+* 可在 lua 中重写蓝图中的函数和事件
+* 可在 lua 中重写 C++ 中的网络事件(Server/Client/NetMulticast)
+* 可在 lua 中重写蓝图中的网络事件
+
 ## 使用 ##
 
 复制到项目 *Plugins* 目录下即可
@@ -21,24 +36,24 @@
     * `AActor` 类，参见 [`LuaImplementableActor.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableActor.h)
         * 在 `BeginPlay` 虚函数里调用 `OnInitLuaBinding`
         * 在 `EndPlay` 和 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
+        * 在 `ProcessEvent` 虚函数里调用 `LuaProcessEvent`
 
     * `UUserWidget` 类，参见 [`LuaImplementableWidget.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableWidget.h)
         * 在 `NativeConstruct` 虚函数里调用 `OnInitLuaBinding`
         * 在 `NativeDestruct` 和 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
+        * 在 `ProcessEvent` 虚函数里调用 `LuaProcessEvent`
 
         Widget 类还有个特殊的地方，该类对象所拥有的 `LatentAction` 不受暂停影响，所以还需要重载 `NativeTick`，在该虚函数里调用 `LatentActionManager` 处理自己拥有的 `LatentAction` 对象
 
     * `UObject` 类，参见 [LuaActionRPG](https://github.com/jashking/LuaActionRPG) 例子中的 [`RPGAnimNotifyState.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGAnimNotifyState.h)
         * 在 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
+        * 在 `ProcessEvent` 虚函数里调用 `LuaProcessEvent`
         * 因为 UObject 类没有一个初始化的虚函数可重载，所以可以在 `ProcessEvent` 第一次被调用时候进行初始化，详情见例子
 
     * `UGameInstance` 类，参见 [LuaActionRPG](https://github.com/jashking/LuaActionRPG) 例子中的 [`RPGGameInstanceBase.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGGameInstanceBase.h)
         * 在 `Init` 虚函数里调用 `OnInitLuaBinding`
         * 在 `Shutdown` 和 `BeginDestroy` 虚函数里调用 `OnReleaseLuaBinding`
-        * 在 `ProcessEvent` 虚函数里调用 `OnProcessLuaOverrideEvent`
+        * 在 `ProcessEvent` 虚函数里调用 `LuaProcessEvent`
 
 * `Super`
 

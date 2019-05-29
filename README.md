@@ -10,6 +10,15 @@ Android, iOS, Mac, Windows, Linux are supported now.
 * [luasocket](https://github.com/diegonehab/luasocket) : Network support for the Lua language
 * [Tencent LuaPanda](https://github.com/Tencent/LuaPanda) : Pandora Lua Debugger for VS Code
 
+## Features ##
+
+* Call UFunction directly in lua
+* Access UProperty member of UClass/UStruct
+* Override BlueprintNativeEvent/BlueprintImplementable in lua
+* Override blueprint's function/event in lua
+* Override native net replicated event(Server/Client/NetMulticast) in lua
+* Override blueprint's net replicated event in lua
+
 ## How to use ##
 
 Clone Bluelua to your project's *Plugins* folder, regenerate project solution and build.
@@ -27,24 +36,24 @@ Clone Bluelua to your project's *Plugins* folder, regenerate project solution an
     * Class `AActor`, see [`LuaImplementableActor.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableActor.h)
         * Call `OnInitLuaBinding` in `BeginPlay`
         * Call `OnReleaseLuaBinding` in `EndPlay`
-        * Call `OnProcessLuaOverrideEvent` in `ProcessEvent`
+        * Call `LuaProcessEvent` in `ProcessEvent`
 
     * Class `UUserWidget`, see [`LuaImplementableWidget.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableWidget.h)
         * Call `OnInitLuaBinding` in `NativeConstruct`
         * Call `OnReleaseLuaBinding` in `NativeDestruct`
-        * Call `OnProcessLuaOverrideEvent` in `ProcessEvent`
+        * Call `LuaProcessEvent` in `ProcessEvent`
 
         The UUserWidget class also has a special place where the `LatentAction` owned by the class is not affected by the pause, so you also need to override `NativeTick` and call `LatentActionManager` in the virtual function to handle all `LatentAction` objects. See `TickActions` in [`LuaImplementableWidget.h`](https://github.com/jashking/Bluelua/blob/master/Source/Bluelua/Public/LuaImplementableWidget.h)
 
     * Class `UObject`, see [`RPGAnimNotifyState.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGAnimNotifyState.h) in [Demo LuaActionRPG](https://github.com/jashking/LuaActionRPG)
         * Call `OnReleaseLuaBinding` in `BeginDestroy`
-        * Call `OnProcessLuaOverrideEvent` in `ProcessEvent`
+        * Call `LuaProcessEvent` in `ProcessEvent`
         * Because the Uobject class does not have an initialized virtual function that can be overrided, so it can call `OnInitLuaBinding` the first time the `ProcessEvent` is called, as shown in the demo
 
     * Class `UGameInstance`, see [`RPGGameInstanceBase.h`](https://github.com/jashking/LuaActionRPG/blob/master/Source/ActionRPG/Public/RPGGameInstanceBase.h) in [Demo LuaActionRPG](https://github.com/jashking/LuaActionRPG)
         * Call `OnInitLuaBinding` in `Init`
         * Call `OnReleaseLuaBinding` in `Shutdown`
-        * Call `OnProcessLuaOverrideEvent` in `ProcessEvent`
+        * Call `LuaProcessEvent` in `ProcessEvent`
 
 * keyword `Super`
 
