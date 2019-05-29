@@ -1,4 +1,4 @@
-#include "LuaImplementableInterface.h"
+﻿#include "LuaImplementableInterface.h"
 
 #include "Misc/Paths.h"
 #include "UObject/Class.h"
@@ -376,9 +376,25 @@ void ILuaImplementableInterface::ProcessBPFunctionOverride(UObject* Context, FFr
 
 	// One bp call another bp function: ... -> CallFunction -> ProcessInternal, so we can call CallFunction
 	// without FUNC_Native again in our own ProcessInternal to back to original pass:
+	const EFunctionFlags FunctionFlags = Function->FunctionFlags;
+	if (FunctionFlags & FUNC_NetMulticast)
+	{
+		// 既可以在本地执行又可以在远端执行的函数在进到这里之前做为native函数时就已经进行过一次远端的调用了
+		// 所以这里要判断一下把对应的flag去掉保证这之后只进行一次本地调用
+		// Functions that can be executed locally and remotely have made a remote call as a native function before entering here
+		// So at this point, we should remove net flags to ensure that in the fallback call to CallFunction
+		// will not make a remote call again
+		const int32 Callspace = Context->GetFunctionCallspace(Function, nullptr, nullptr);
+		if (Callspace & FunctionCallspace::Remote && Callspace & FunctionCallspace::Local)
+		{
+			Function->FunctionFlags &= ~FUNC_Net;
+			Function->FunctionFlags &= ~FUNC_NetMulticast;
+		}
+	}
+
 	Function->FunctionFlags &= ~FUNC_Native;
 	Context->CallFunction(Stack, Z_Param__Result, Function);
-	Function->FunctionFlags |= FUNC_Native;
+	Function->FunctionFlags = FunctionFlags;
 }
 
 bool ILuaImplementableInterface::CallBPFunctionOverride(UFunction* Function, FFrame& Stack, void* const Z_Param__Result)
