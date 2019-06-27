@@ -1,6 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/InputComponent.h"
+#include "Engine/EngineBaseTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BlueluaLibrary.generated.h"
 
