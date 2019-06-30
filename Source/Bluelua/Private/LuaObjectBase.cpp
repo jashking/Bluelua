@@ -635,25 +635,31 @@ bool FLuaObjectBase::Fetch(lua_State* L, int32 Index, FName& Value)
 
 int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Function, bool bIsParentDefaultFunction/* = false*/)
 {
-	FStructOnScope FuncParams(Function);
+	uint8* Parms = (uint8*)FMemory_Alloca(Function->ParmsSize);
+	FMemory::Memzero(Parms, Function->ParmsSize);
 
 	int32 ParamIndex = 2;
 	UProperty* ReturnValue = nullptr;
 	for (TFieldIterator<UProperty> ParamIter(Function); ParamIter && (ParamIter->PropertyFlags & CPF_Parm); ++ParamIter)
 	{
 		UProperty* ParamProperty = *ParamIter;
-		if (ParamIter->PropertyFlags & CPF_ReturnParm)
+		if (!ParamProperty->HasAnyPropertyFlags(CPF_ZeroConstructor))
+		{
+			ParamProperty->InitializeValue_InContainer(Parms);
+		}
+
+		if (ParamProperty->PropertyFlags & CPF_ReturnParm)
 		{
 			ReturnValue = ParamProperty;
 		}
 		else
 		{
-			FetchProperty(L, ParamProperty, ParamProperty->ContainerPtrToValuePtr<uint8>(FuncParams.GetStructMemory()), ParamIndex++);
+			FetchProperty(L, ParamProperty, ParamProperty->ContainerPtrToValuePtr<uint8>(Parms), ParamIndex++);
 		}
 	}
 
 	const EFunctionFlags FunctionFlags = Function->FunctionFlags;
-	FNativeFuncPtr NativeFucPtr = Function->GetNativeFunc();
+	const FNativeFuncPtr NativeFucPtr = Function->GetNativeFunc();
 
 	if (NativeFucPtr == &ILuaImplementableInterface::ProcessBPFunctionOverride)
 	{
@@ -669,11 +675,11 @@ int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Funct
 
 	if (bIsParentDefaultFunction)
 	{
-		Object->UObject::ProcessEvent(Function, FuncParams.GetStructMemory());
+		Object->UObject::ProcessEvent(Function, Parms);
 	}
 	else
 	{
-		Object->ProcessEvent(Function, FuncParams.GetStructMemory());
+		Object->ProcessEvent(Function, Parms);
 	}
 
 	Function->FunctionFlags = FunctionFlags;
@@ -682,20 +688,20 @@ int FLuaObjectBase::CallFunction(lua_State* L, UObject* Object, UFunction* Funct
 	int32 ReturnNum = 0;
 	if (ReturnValue)
 	{
-		FLuaObjectBase::PushProperty(L, ReturnValue, ReturnValue->ContainerPtrToValuePtr<uint8>(FuncParams.GetStructMemory()));
+		FLuaObjectBase::PushProperty(L, ReturnValue, ReturnValue->ContainerPtrToValuePtr<uint8>(Parms));
 		ReturnNum++;
 	}
 
-	if (Function->HasAnyFunctionFlags(FUNC_HasOutParms))
+	for (TFieldIterator<UProperty> ParamIter(Function); ParamIter && (ParamIter->PropertyFlags & CPF_Parm); ++ParamIter)
 	{
-		for (TFieldIterator<UProperty> ParamIter(Function); ParamIter && ((ParamIter->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++ParamIter)
+		if (!(ParamIter->PropertyFlags & CPF_ReturnParm) &&
+			(ParamIter->PropertyFlags & (CPF_ConstParm | CPF_OutParm)) == CPF_OutParm)
 		{
-			if ((ParamIter->PropertyFlags & (CPF_ConstParm | CPF_OutParm)) == CPF_OutParm)
-			{
-				FLuaObjectBase::PushProperty(L, *ParamIter, (*ParamIter)->ContainerPtrToValuePtr<uint8>(FuncParams.GetStructMemory()));
-				ReturnNum++;
-			}
+			FLuaObjectBase::PushProperty(L, *ParamIter, (*ParamIter)->ContainerPtrToValuePtr<uint8>(Parms));
+			ReturnNum++;
 		}
+
+		ParamIter->DestroyValue_InContainer(Parms);
 	}
 
 	return ReturnNum;
