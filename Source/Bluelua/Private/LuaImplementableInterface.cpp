@@ -1,4 +1,4 @@
-﻿#include "LuaImplementableInterface.h"
+#include "LuaImplementableInterface.h"
 
 #include "Misc/Paths.h"
 #include "UObject/Class.h"
@@ -276,7 +276,7 @@ bool ILuaImplementableInterface::InitBPFunctionOverriding()
 			FLuaObjectBase::Fetch(L, -2, FunctionName);
 
 			UFunction* TargetFunction = Class->FindFunctionByName(*FunctionName);
-			if (TargetFunction && !TargetFunction->IsNative() &&
+			if (TargetFunction &&
 				(TargetFunction->FunctionFlags & FUNC_BlueprintCallable) &&
 				(TargetFunction->FunctionFlags & FUNC_BlueprintEvent))
 			{
