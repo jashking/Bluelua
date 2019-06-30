@@ -65,8 +65,14 @@ void ULuaImplementableWidget::TickActions(float InDeltaTime)
 		{
 			for (const auto& Object : ChildObjects)
 			{
+				// UE4.21 and later, ProcessLatentActions only process actions with CLASS_CompiledFromBlueprint flag
+				const EClassFlags ClassFlags = Object->GetClass()->ClassFlags;
+				Object->GetClass()->ClassFlags |= CLASS_CompiledFromBlueprint;
+
 				// Update any latent actions we have for this actor
 				World->GetLatentActionManager().ProcessLatentActions(Object, InDeltaTime);
+
+				Object->GetClass()->ClassFlags = ClassFlags;
 			}
 		}
 	}
