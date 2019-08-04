@@ -8,6 +8,9 @@
 #include "UObject/UnrealType.h"
 
 #include "Bluelua.h"
+#include "Delegates/LuaMulticastScriptDelegate.h"
+#include "Delegates/LuaScriptDelegate.h"
+#include "Delegates/LuaSparseDelegate.h"
 #include "lua.hpp"
 #include "LuaImplementableInterface.h"
 #include "LuaUClass.h"
@@ -90,7 +93,8 @@ void FLuaObjectBase::Init()
 	RegisterPusher<USetProperty>(PushSetProperty);
 	RegisterPusher<UMapProperty>(PushMapProperty);
 #if ENGINE_MINOR_VERSION >= 23
-	RegisterPusher<UMulticastInlineDelegateProperty>(PushMulticastDelegateProperty);
+	RegisterPusher<UMulticastInlineDelegateProperty>(PushMulticastInlineDelegateProperty);
+	RegisterPusher<UMulticastSparseDelegateProperty>(PushMulticastSparseDelegateProperty);
 #else
 	RegisterPusher<UMulticastDelegateProperty>(PushMulticastDelegateProperty);
 #endif // ENGINE_MINOR_VERSION >= 23
@@ -118,7 +122,8 @@ void FLuaObjectBase::Init()
 	RegisterFetcher<USetProperty>(FetchSetProperty);
 	RegisterFetcher<UMapProperty>(FetchMapProperty);
 #if ENGINE_MINOR_VERSION >= 23
-	RegisterFetcher<UMulticastInlineDelegateProperty>(FetchMulticastDelegateProperty);
+	RegisterFetcher<UMulticastInlineDelegateProperty>(FetchMulticastInlineDelegateProperty);
+	RegisterFetcher<UMulticastSparseDelegateProperty>(FetchMulticastSparseDelegateProperty);
 #else
 	RegisterFetcher<UMulticastDelegateProperty>(FetchMulticastDelegateProperty);
 #endif // ENGINE_MINOR_VERSION >= 23
@@ -143,7 +148,8 @@ int FLuaObjectBase::PushProperty(lua_State* L, UProperty* Property, void* Params
 {
 	SCOPE_CYCLE_COUNTER(STAT_PushPropertyToLua);
 
-	auto Pusher = GetPusher(Property->GetClass());
+	UClass* PropertyClass = Property->GetClass();
+	auto Pusher = GetPusher(PropertyClass);
 	if (Pusher)
 	{
 		return Pusher(L, Property, Params, Object, bCopyValue);
@@ -152,7 +158,7 @@ int FLuaObjectBase::PushProperty(lua_State* L, UProperty* Property, void* Params
 	{
 		lua_pushnil(L);
 
-		UE_LOG(LogBluelua, Error, TEXT("Push property[%s] failed! Unkown type!"), *Property->GetName());
+		UE_LOG(LogBluelua, Error, TEXT("Push property[%s] failed! Unkown type[%s]!"), *Property->GetName(), PropertyClass ? *PropertyClass->GetName() : TEXT(""));
 
 		return 1;
 	}
@@ -253,19 +259,41 @@ int FLuaObjectBase::PushMapProperty(lua_State* L, UProperty* Property, void* Par
 int FLuaObjectBase::PushMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 #if ENGINE_MINOR_VERSION >= 23
-	UMulticastInlineDelegateProperty* DelegateProperty = Cast<UMulticastInlineDelegateProperty>(Property);
+	return 0;
 #else
 	UMulticastDelegateProperty* DelegateProperty = Cast<UMulticastDelegateProperty>(Property);
-#endif // ENGINE_MINOR_VERSION >= 23
 
-	return FLuaUDelegate::Push(L, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, true);
+	return FLuaUDelegate::Push(L, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, FLuaMulticastScriptDelegate::Create);
+#endif // ENGINE_MINOR_VERSION >= 23
+}
+
+int FLuaObjectBase::PushMulticastInlineDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
+{
+#if ENGINE_MINOR_VERSION >= 23
+	UMulticastInlineDelegateProperty* DelegateProperty = Cast<UMulticastInlineDelegateProperty>(Property);
+
+	return FLuaUDelegate::Push(L, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, FLuaMulticastScriptDelegate::Create);
+#else
+	return 0;
+#endif // ENGINE_MINOR_VERSION >= 23
+}
+
+int FLuaObjectBase::PushMulticastSparseDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
+{
+#if ENGINE_MINOR_VERSION >= 23
+	UMulticastSparseDelegateProperty* DelegateProperty = Cast<UMulticastSparseDelegateProperty>(Property);
+
+	return FLuaUDelegate::Push(L, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, FLuaSparseDelegate::Create);
+#else
+	return 0;
+#endif // ENGINE_MINOR_VERSION >= 23
 }
 
 int FLuaObjectBase::PushDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
 	auto DelegateProperty = Cast<UDelegateProperty>(Property);
 
-	return FLuaUDelegate::Push(L, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, false);
+	return FLuaUDelegate::Push(L, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, FLuaScriptDelegate::Create);
 }
 
 int FLuaObjectBase::Push(lua_State* L, int8 Value)
@@ -515,10 +543,9 @@ bool FLuaObjectBase::FetchMapProperty(lua_State* L, UProperty* Property, void* P
 bool FLuaObjectBase::FetchMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index)
 {
 #if ENGINE_MINOR_VERSION >= 23
-	UMulticastInlineDelegateProperty* DelegateProperty = Cast<UMulticastInlineDelegateProperty>(Property);
+	return false;
 #else
 	UMulticastDelegateProperty* DelegateProperty = Cast<UMulticastDelegateProperty>(Property);
-#endif // ENGINE_MINOR_VERSION >= 23
 	if (!DelegateProperty)
 	{
 		return false;
@@ -537,6 +564,57 @@ bool FLuaObjectBase::FetchMulticastDelegateProperty(lua_State* L, UProperty* Pro
 	}
 
 	return true;
+#endif // ENGINE_MINOR_VERSION >= 23
+}
+
+bool FLuaObjectBase::FetchMulticastInlineDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index)
+{
+#if ENGINE_MINOR_VERSION >= 23
+	UMulticastInlineDelegateProperty* DelegateProperty = Cast<UMulticastInlineDelegateProperty>(Property);
+	if (!DelegateProperty)
+	{
+		return false;
+	}
+
+	FScriptDelegate ScriptDelegate;
+	if (!FLuaUDelegate::Fetch(L, Index, DelegateProperty->SignatureFunction, &ScriptDelegate))
+	{
+		return false;
+	}
+
+	FMulticastScriptDelegate* MulticastScriptDelegate = DelegateProperty->GetPropertyValuePtr(Params);
+	if (MulticastScriptDelegate)
+	{
+		MulticastScriptDelegate->AddUnique(ScriptDelegate);
+	}
+
+	return true;
+#else
+	return false;
+#endif // ENGINE_MINOR_VERSION >= 23
+}
+
+bool FLuaObjectBase::FetchMulticastSparseDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index)
+{
+#if ENGINE_MINOR_VERSION >= 23
+	UMulticastSparseDelegateProperty* DelegateProperty = Cast<UMulticastSparseDelegateProperty>(Property);
+	if (!DelegateProperty)
+	{
+		return false;
+	}
+
+	FScriptDelegate ScriptDelegate;
+	if (!FLuaUDelegate::Fetch(L, Index, DelegateProperty->SignatureFunction, &ScriptDelegate))
+	{
+		return false;
+	}
+
+	DelegateProperty->AddDelegate(ScriptDelegate, nullptr, DelegateProperty->GetPropertyValuePtr(Params));
+
+	return true;
+#else
+	return false;
+#endif // ENGINE_MINOR_VERSION >= 23
 }
 
 bool FLuaObjectBase::FetchDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index)

@@ -14,10 +14,9 @@ DECLARE_CYCLE_STAT(TEXT("DelegatePush"), STAT_DelegatePush, STATGROUP_Bluelua);
 
 const char* FLuaUDelegate::UDELEGATE_METATABLE = "UDelegate_Metatable";
 
-FLuaUDelegate::FLuaUDelegate(void* InSource, UFunction* InFunction, bool InbIsMulticast)
+FLuaUDelegate::FLuaUDelegate(void* InSource, UFunction* InFunction)
 	: Source(InSource)
 	, Function(InFunction)
-	, bIsMulticast(InbIsMulticast)
 {
 
 }
@@ -27,11 +26,11 @@ FLuaUDelegate::~FLuaUDelegate()
 
 }
 
-int FLuaUDelegate::Push(lua_State* L, void* InSource, UFunction* InFunction, bool InbIsMulticast, void* InBuffer /*= nullptr*/)
+int FLuaUDelegate::Push(lua_State* L, void* InSource, UFunction* InFunction, FCreateDelegateFuncPtr CreateDelegateFuncPtr, void* InBuffer /*= nullptr*/)
 {
 	SCOPE_CYCLE_COUNTER(STAT_DelegatePush);
 
-	if (!InSource || !InFunction)
+	if (!InSource || !InFunction || !CreateDelegateFuncPtr)
 	{
 		lua_pushnil(L);
 		return 1;
@@ -43,9 +42,7 @@ int FLuaUDelegate::Push(lua_State* L, void* InSource, UFunction* InFunction, boo
 		return 1;
 	}
 
-	uint8* UserData = (uint8*)lua_newuserdata(L, sizeof(FLuaUDelegate));
-
-	FLuaUDelegate* LuaUDelegate = new(UserData) FLuaUDelegate(InSource, InFunction, InbIsMulticast);
+	FLuaUDelegate* LuaUDelegate = CreateDelegateFuncPtr(L, InSource, InFunction);
 
 	if (luaL_newmetatable(L, UDELEGATE_METATABLE))
 	{
@@ -129,25 +126,7 @@ int FLuaUDelegate::Add(lua_State* L)
 	ULuaFunctionDelegate* FunctionDelegate = ULuaFunctionDelegate::Fetch(L, 2);
 	FunctionDelegate->BindSignatureFunction(LuaUDelegate->Function);
 
-	if (LuaUDelegate->bIsMulticast)
-	{
-		FScriptDelegate Delegate;
-		Delegate.BindUFunction(FunctionDelegate, ULuaFunctionDelegate::DelegateFunctionName);
-
-		FMulticastScriptDelegate* MulticastScriptDelegate = reinterpret_cast<FMulticastScriptDelegate*>(LuaUDelegate->Source);
-		if (MulticastScriptDelegate)
-		{
-			MulticastScriptDelegate->AddUnique(Delegate);
-		}
-	}
-	else
-	{
-		FScriptDelegate* ScriptDelegate = reinterpret_cast<FScriptDelegate*>(LuaUDelegate->Source);
-		if (ScriptDelegate)
-		{
-			ScriptDelegate->BindUFunction(FunctionDelegate, ULuaFunctionDelegate::DelegateFunctionName);
-		}
-	}
+	LuaUDelegate->OnAdd(FunctionDelegate);
 
 	lua_pushboolean(L, 1);
 	return 1;
@@ -164,25 +143,7 @@ int FLuaUDelegate::Remove(lua_State* L)
 		LuaStateWrapper->RemoveReference(FunctionDelegate, FunctionDelegate->GetOuter());
 	}
 
-	if (LuaUDelegate->bIsMulticast)
-	{
-		FScriptDelegate Delegate;
-		Delegate.BindUFunction(FunctionDelegate, ULuaFunctionDelegate::DelegateFunctionName);
-
-		FMulticastScriptDelegate* MulticastScriptDelegate = reinterpret_cast<FMulticastScriptDelegate*>(LuaUDelegate->Source);
-		if (MulticastScriptDelegate)
-		{
-			MulticastScriptDelegate->Remove(Delegate);
-		}
-	}
-	else
-	{
-		FScriptDelegate* ScriptDelegate = reinterpret_cast<FScriptDelegate*>(LuaUDelegate->Source);
-		if (ScriptDelegate)
-		{
-			ScriptDelegate->Clear();
-		}
-	}
+	LuaUDelegate->OnRemove(FunctionDelegate);
 
 	return 0;
 }
@@ -192,38 +153,17 @@ int FLuaUDelegate::Clear(lua_State* L)
 	FLuaUDelegate* LuaUDelegate = (FLuaUDelegate*)luaL_checkudata(L, 1, UDELEGATE_METATABLE);
 	FLuaState* LuaStateWrapper = FLuaState::GetStateWrapper(L);
 
-	if (LuaUDelegate->bIsMulticast)
+	TArray<UObject*> Objects = LuaUDelegate->OnGetAllObjects();
+	for (UObject* Object : Objects)
 	{
-		FMulticastScriptDelegate* MulticastScriptDelegate = reinterpret_cast<FMulticastScriptDelegate*>(LuaUDelegate->Source);
-		if (MulticastScriptDelegate)
+		ULuaFunctionDelegate* FunctionDelegate = Cast<ULuaFunctionDelegate>(Object);
+		if (FunctionDelegate && LuaStateWrapper)
 		{
-			TArray<UObject*> Objects = MulticastScriptDelegate->GetAllObjects();
-			for (UObject* Object : Objects)
-			{
-				ULuaFunctionDelegate* FunctionDelegate = Cast<ULuaFunctionDelegate>(Object);
-				if (FunctionDelegate && LuaStateWrapper)
-				{
-					LuaStateWrapper->RemoveReference(FunctionDelegate, FunctionDelegate->GetOuter());
-				}
-			}
-
-			MulticastScriptDelegate->Clear();
+			LuaStateWrapper->RemoveReference(FunctionDelegate, FunctionDelegate->GetOuter());
 		}
 	}
-	else
-	{
-		FScriptDelegate* ScriptDelegate = reinterpret_cast<FScriptDelegate*>(LuaUDelegate->Source);
-		if (ScriptDelegate)
-		{
-			ULuaFunctionDelegate* FunctionDelegate = Cast<ULuaFunctionDelegate>(ScriptDelegate->GetUObject());
-			if (FunctionDelegate && LuaStateWrapper)
-			{
-				LuaStateWrapper->RemoveReference(FunctionDelegate, FunctionDelegate->GetOuter());
-			}
 
-			ScriptDelegate->Clear();
-		}
-	}
+	LuaUDelegate->OnClear();
 
 	return 0;
 }
@@ -232,7 +172,7 @@ int FLuaUDelegate::ToString(lua_State* L)
 {
 	FLuaUDelegate* LuaUDelegate = (FLuaUDelegate*)luaL_checkudata(L, 1, UDELEGATE_METATABLE);
 
-	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("UDelegate[%s][%x]"), LuaUDelegate->Function ? *(LuaUDelegate->Function->GetName()) : TEXT("null"), LuaUDelegate)));
+	lua_pushstring(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("%s[%s][%x]"), *LuaUDelegate->OnGetName(), LuaUDelegate->Function ? *(LuaUDelegate->Function->GetName()) : TEXT("null"), LuaUDelegate)));
 
 	return 1;
 }

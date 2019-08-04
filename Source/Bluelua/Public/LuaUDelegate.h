@@ -4,13 +4,18 @@
 
 #include "LuaObjectBase.h"
 
+class ULuaFunctionDelegate;
+class FLuaUDelegate;
+
+typedef FLuaUDelegate*(*FCreateDelegateFuncPtr)(lua_State* L, void* InSource, UFunction* InFunction);
+
 class BLUELUA_API FLuaUDelegate : public FLuaObjectBase
 {
 public:
-	FLuaUDelegate(void* InSource, UFunction* InFunction, bool InbIsMulticast);
-	~FLuaUDelegate();
+	FLuaUDelegate(void* InSource, UFunction* InFunction);
+	virtual ~FLuaUDelegate();
 
-	static int Push(lua_State* L, void* InSource, UFunction* InFunction, bool InbIsMulticast, void* InBuffer = nullptr);
+	static int Push(lua_State* L, void* InSource, UFunction* InFunction, FCreateDelegateFuncPtr CreateDelegateFuncPtr, void* InBuffer = nullptr);
 	static bool Fetch(lua_State* L, int32 Index, UFunction* InFunction, FScriptDelegate* InScriptDelegate);
 
 protected:
@@ -22,8 +27,13 @@ protected:
 
 	static const char* UDELEGATE_METATABLE;
 
+	virtual void OnAdd(ULuaFunctionDelegate* LuaFunctionDelegate) = 0;
+	virtual void OnRemove(ULuaFunctionDelegate* LuaFunctionDelegate) = 0;
+	virtual void OnClear() = 0;
+	virtual TArray<UObject*> OnGetAllObjects() const = 0;
+	virtual FString OnGetName() = 0;
+
 protected:
 	void* Source;
 	UFunction* Function;
-	bool bIsMulticast;
 };

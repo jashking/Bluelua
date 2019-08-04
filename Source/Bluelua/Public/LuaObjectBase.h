@@ -25,6 +25,8 @@ public:
 	static int PushSetProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
 	static int PushMapProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
 	static int PushMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
+	static int PushMulticastInlineDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
+	static int PushMulticastSparseDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
 	static int PushDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool);
 
 	inline static int Push(lua_State* L, int8 Value);
@@ -51,6 +53,8 @@ public:
 	static bool FetchSetProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
 	static bool FetchMapProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
 	static bool FetchMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
+	static bool FetchMulticastInlineDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
+	static bool FetchMulticastSparseDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
 	static bool FetchDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index);
 
 	inline static bool Fetch(lua_State* L, int32 Index, int8& Value);
