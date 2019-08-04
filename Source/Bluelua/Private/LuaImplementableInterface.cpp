@@ -1,6 +1,7 @@
 #include "LuaImplementableInterface.h"
 
 #include "Misc/Paths.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 
@@ -221,7 +222,11 @@ bool ILuaImplementableInterface::OnProcessLuaOverrideEvent(UFunction* Function, 
 	if ((Function->FunctionFlags & FUNC_Native) != 0)
 	{
 		UObject* Object = Cast<UObject>(this);
+#if ENGINE_MINOR_VERSION >= 23
+		const int32 Callspace = Object->GetFunctionCallspace(Function, NULL);
+#else
 		const int32 Callspace = Object->GetFunctionCallspace(Function, Parameters, NULL);
+#endif // ENGINE_MINOR_VERSION >= 23
 		if (Callspace & FunctionCallspace::Remote)
 		{
 			Object->CallRemoteFunction(Function, Parameters, NULL, NULL);
@@ -384,7 +389,11 @@ void ILuaImplementableInterface::ProcessBPFunctionOverride(UObject* Context, FFr
 		// Functions that can be executed locally and remotely have made a remote call as a native function before entering here
 		// So at this point, we should remove net flags to ensure that in the fallback call to CallFunction
 		// will not make a remote call again
-		const int32 Callspace = Context->GetFunctionCallspace(Function, nullptr, nullptr);
+#if ENGINE_MINOR_VERSION >= 23
+		const int32 Callspace = Context->GetFunctionCallspace(Function, &Stack);
+#else
+		const int32 Callspace = Context->GetFunctionCallspace(Function, nullptr, &Stack);
+#endif // ENGINE_MINOR_VERSION >= 23
 		if (Callspace & FunctionCallspace::Remote && Callspace & FunctionCallspace::Local)
 		{
 			Function->FunctionFlags &= ~FUNC_Net;

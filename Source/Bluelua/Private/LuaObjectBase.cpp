@@ -1,5 +1,6 @@
 #include "LuaObjectBase.h"
 
+#include "Runtime/Launch/Resources/Version.h"
 #include "UObject/Class.h"
 #include "UObject/EnumProperty.h"
 #include "UObject/TextProperty.h"
@@ -88,7 +89,11 @@ void FLuaObjectBase::Init()
 	RegisterPusher<UArrayProperty>(PushArrayProperty);
 	RegisterPusher<USetProperty>(PushSetProperty);
 	RegisterPusher<UMapProperty>(PushMapProperty);
+#if ENGINE_MINOR_VERSION >= 23
+	RegisterPusher<UMulticastInlineDelegateProperty>(PushMulticastDelegateProperty);
+#else
 	RegisterPusher<UMulticastDelegateProperty>(PushMulticastDelegateProperty);
+#endif // ENGINE_MINOR_VERSION >= 23
 	RegisterPusher<UDelegateProperty>(PushDelegateProperty);
 
 	RegisterFetcher<UByteProperty>(FetchBaseProperty<UByteProperty>);
@@ -112,7 +117,11 @@ void FLuaObjectBase::Init()
 	RegisterFetcher<UArrayProperty>(FetchArrayProperty);
 	RegisterFetcher<USetProperty>(FetchSetProperty);
 	RegisterFetcher<UMapProperty>(FetchMapProperty);
+#if ENGINE_MINOR_VERSION >= 23
+	RegisterFetcher<UMulticastInlineDelegateProperty>(FetchMulticastDelegateProperty);
+#else
 	RegisterFetcher<UMulticastDelegateProperty>(FetchMulticastDelegateProperty);
+#endif // ENGINE_MINOR_VERSION >= 23
 	RegisterFetcher<UDelegateProperty>(FetchDelegateProperty);
 }
 
@@ -243,7 +252,11 @@ int FLuaObjectBase::PushMapProperty(lua_State* L, UProperty* Property, void* Par
 
 int FLuaObjectBase::PushMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, UObject* Object, bool)
 {
-	auto DelegateProperty = Cast<UMulticastDelegateProperty>(Property);
+#if ENGINE_MINOR_VERSION >= 23
+	UMulticastInlineDelegateProperty* DelegateProperty = Cast<UMulticastInlineDelegateProperty>(Property);
+#else
+	UMulticastDelegateProperty* DelegateProperty = Cast<UMulticastDelegateProperty>(Property);
+#endif // ENGINE_MINOR_VERSION >= 23
 
 	return FLuaUDelegate::Push(L, DelegateProperty->GetPropertyValuePtr(Params), DelegateProperty->SignatureFunction, true);
 }
@@ -501,7 +514,11 @@ bool FLuaObjectBase::FetchMapProperty(lua_State* L, UProperty* Property, void* P
 
 bool FLuaObjectBase::FetchMulticastDelegateProperty(lua_State* L, UProperty* Property, void* Params, int32 Index)
 {
-	auto DelegateProperty = Cast<UMulticastDelegateProperty>(Property);
+#if ENGINE_MINOR_VERSION >= 23
+	UMulticastInlineDelegateProperty* DelegateProperty = Cast<UMulticastInlineDelegateProperty>(Property);
+#else
+	UMulticastDelegateProperty* DelegateProperty = Cast<UMulticastDelegateProperty>(Property);
+#endif // ENGINE_MINOR_VERSION >= 23
 	if (!DelegateProperty)
 	{
 		return false;
